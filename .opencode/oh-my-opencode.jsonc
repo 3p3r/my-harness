@@ -1,0 +1,37 @@
+{
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/dev/assets/oh-my-opencode.schema.json",
+  // All agents and categories routed to local Qwen3.5-35B-A3B via llama-server
+  "agents": {
+    "sisyphus": { "model": "local/qwen" },
+    "hephaestus": { "model": "local/qwen" },
+    "oracle": { "model": "local/qwen" },
+    "librarian": { "model": "local/qwen" },
+    "explore": { "model": "local/qwen" },
+    "multimodal-looker": { "model": "local/qwen" },
+    "prometheus": { "model": "local/qwen" },
+    "metis": { "model": "local/qwen" },
+    "momus": { "model": "local/qwen" },
+    "atlas": { "model": "local/qwen" }
+  },
+  "categories": {
+    "visual-engineering": { "model": "local/qwen" },
+    "ultrabrain": { "model": "local/qwen" },
+    "deep": { "model": "local/qwen" },
+    "artistry": { "model": "local/qwen" },
+    "quick": { "model": "local/qwen" },
+    "unspecified-low": { "model": "local/qwen" },
+    "unspecified-high": { "model": "local/qwen" },
+    "writing": { "model": "local/qwen" }
+  },
+  "browser_automation_engine": { "provider": "agent-browser" },
+  "lsp": {
+    "typescript-language-server": {
+      "command": ["typescript-language-server", "--stdio"],
+      "extensions": [".ts", ".tsx", ".js", ".jsx"],
+      "priority": 10,
+      "env": { "NODE_OPTIONS": "--max-old-space-size=4096" },
+      "initialization": { "preferences": { "includeInlayParameterNameHints": "all" } }
+    },
+    "pylsp": { "disabled": true }
+  }
+}
