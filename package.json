@@ -4,8 +4,7 @@
   "description": "my personal stack of AI tools for my own consumption!",
   "main": "run.zx.ts",
   "scripts": {
-    "start": "nodemon --watch . --ext ts --exec \"npm run start:script\"",
-    "start:script": "NODE_OPTIONS='--import tsx' zx run.zx.ts",
+    "start": "NODE_OPTIONS='--import tsx' zx run.zx.ts",
     "format": "biome format --write ."
   },
   "repository": {
@@ -23,7 +22,6 @@
     "@biomejs/biome": "^2.4.5",
     "@types/node": "^25.3.3",
     "contextplus": "^1.0.4",
-    "nodemon": "^3.1.14",
     "tsx": "^4.21.0",
     "zx": "^8.8.5"
   }

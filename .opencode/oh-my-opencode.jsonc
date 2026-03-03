@@ -30,7 +30,9 @@
       "extensions": [".ts", ".tsx", ".js", ".jsx"],
       "priority": 10,
       "env": { "NODE_OPTIONS": "--max-old-space-size=4096" },
-      "initialization": { "preferences": { "includeInlayParameterNameHints": "all" } }
+      "initialization": {
+        "preferences": { "includeInlayParameterNameHints": "all" }
+      }
     },
     "pylsp": { "disabled": true }
   }
