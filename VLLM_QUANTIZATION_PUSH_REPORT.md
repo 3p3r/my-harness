@@ -94,6 +94,8 @@ On both hosts:
 - host-reported VRAM: `68719476736` bytes
 - GPU arch: `gfx1151`
 
+Later validation showed that this `68719476736`-byte figure matches a broader platform memory split: Linux currently sees only about `62 GiB` of normal system RAM on both hosts while firmware reserves another roughly `64.26 GiB` high-memory region before the OS boots. In other words, the current platform state is effectively `64 GB usable system RAM + ~64 GB firmware-reserved/graphics-addressable memory`, not `128 GB fully usable system RAM`.
+
 On the hosts at probe time:
 
 - `vulkaninfo`: not installed as a host command

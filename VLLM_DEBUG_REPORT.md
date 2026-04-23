@@ -122,7 +122,37 @@ This left both Geekoms idle for on-demand launch later.
 
 ### Important capacity note
 
-During probing, the useful GPU-visible capacity reported through ROCm/HIP was about `64 GiB`, not a discrete `128 GiB VRAM` pool. This mattered directly for vLLM KV-cache sizing and model feasibility. The retail product marketing may advertise `128 GB` as unified system memory potential, but the relevant runtime budget for the GPU process path was the HIP-reported effective capacity, not the marketing sheet.
+Follow-up validation showed that this was not just a loose runtime budgeting note.
+
+What both Linux hosts currently expose is:
+
+- about `62 GiB` total system RAM to the OS (`MemTotal: ~65,470,340 kB`)
+- about `64 GiB` GPU-visible memory to ROCm (`68719476736` bytes)
+
+What the firmware tables simultaneously report is:
+
+- eight onboard `16 GB` LPDDR5X devices
+- a GEEKOM A9 Mega product configuration marketed as up to `128 GB`
+
+The decisive clue is the physical memory map. On the current BIOS, a high-memory block of about `64.26 GiB` is reserved by firmware before Linux boots, leaving only the lower half exposed as normal system RAM. This means the hosts are currently configured as effectively `64 GB usable system RAM + ~64 GB firmware-reserved/graphics-addressable memory`, not as `128 GB fully usable system RAM`.
+
+This mattered directly for vLLM KV-cache sizing and model feasibility.
+
+### Resolution path for the missing half of RAM
+
+This is not a Linux kernel `mem=` limit and not an offline-memory issue. The likely cause is a firmware-level UMA / graphics memory reservation mode on the GEEKOM A9 Mega platform.
+
+The practical fix path is:
+
+1. Enter BIOS setup.
+2. Look for a setting related to integrated graphics memory reservation, such as `UMA`, `UMA Frame Buffer`, `iGPU memory`, `graphics memory`, `VRAM`, or a vendor performance profile that changes reserved graphics memory.
+3. If present, set it to `Auto`, `Default`, or the smallest non-degrading reservation instead of a `High` or fixed `64 GB` mode.
+4. If the BIOS has a one-shot `Load Optimized Defaults` option, that is also worth testing before re-applying only the known-good ROCm stability changes.
+5. After reboot, verify with `free -h`, `/proc/meminfo`, and `/sys/class/drm/card0/device/mem_info_vram_total`.
+
+There is external evidence for this exact platform that a graphics tuning mode can reserve about `64 GB` of RAM. If the BIOS does not expose a usable UMA setting, the next step is a vendor BIOS/firmware update request to GEEKOM, because the current BIOS also reports an incorrect `Maximum Capacity: 64 GB` SMBIOS memory array despite listing eight `16 GB` memory devices.
+
+Important tradeoff: if this reservation is reduced, Linux should regain more conventional system RAM, but the GPU-visible memory budget may also shrink. For these Strix Halo hosts, that can directly change which vLLM and `llama.cpp` model/context combinations still fit.
 
 ### vLLM images used
 
