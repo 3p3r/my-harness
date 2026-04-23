@@ -1,0 +1,31 @@
+name: deezr
+
+services:
+  litellm-proxy:
+    image: docker.litellm.ai/berriai/litellm:main-latest
+    container_name: litellm-proxy
+    restart: unless-stopped
+    init: true
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+    ulimits:
+      nofile:
+        soft: 1048576
+        hard: 1048576
+    stop_grace_period: 2m
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:4000/v1/models', timeout=5).read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 2m
+    command:
+      - --config
+      - /app/config.yaml

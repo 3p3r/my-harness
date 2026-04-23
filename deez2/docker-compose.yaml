@@ -1,0 +1,71 @@
+name: deez2
+
+services:
+  qwen3vl-vllm:
+    image: vllm/vllm-openai-rocm:gemma4
+    container_name: qwen3vl-vllm
+    restart: unless-stopped
+    init: true
+    network_mode: host
+    ipc: host
+    privileged: true
+    cap_add:
+      - SYS_ADMIN
+      - SYS_PTRACE
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+      - /dev/mem:/dev/mem
+    security_opt:
+      - seccomp=unconfined
+    shm_size: "16gb"
+    volumes:
+      - /root/.cache/huggingface:/root/.cache/huggingface
+    environment:
+      HF_HOME: /root/.cache/huggingface
+      VLLM_NO_USAGE_STATS: "1"
+    ulimits:
+      nofile:
+        soft: 1048576
+        hard: 1048576
+    stop_grace_period: 5m
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 10m
+    command:
+      - cyankiwi/Qwen3-VL-30B-A3B-Thinking-AWQ-4bit
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --tensor-parallel-size
+      - "1"
+      - --gpu-memory-utilization
+      - "0.95"
+      - --max-model-len
+      - "131072"
+      - --max-num-seqs
+      - "2"
+      - --max-num-batched-tokens
+      - "8192"
+      - --enable-prefix-caching
+      - --enable-chunked-prefill
+      - --limit-mm-per-prompt
+      - '{"image":1,"video":0,"audio":0}'
+      - --skip-mm-profiling
+      - --reasoning-parser
+      - qwen3
+      - --quantization
+      - compressed-tensors
+      - --dtype
+      - float16
+      - --served-model-name
+      - Qwen/Qwen3-VL-30B-A3B-Thinking

@@ -1,0 +1,149 @@
+name: deezx
+
+services:
+  qwen36-research-vllm:
+    image: vllm/vllm-openai:latest
+    container_name: qwen36-research-vllm
+    restart: unless-stopped
+    init: true
+    gpus: all
+    network_mode: host
+    ipc: host
+    shm_size: "16gb"
+    volumes:
+      - /root/.cache/huggingface:/root/.cache/huggingface
+    environment:
+      CUDA_VISIBLE_DEVICES: "0"
+      HF_HOME: /root/.cache/huggingface
+      VLLM_NO_USAGE_STATS: "1"
+    ulimits:
+      nofile:
+        soft: 1048576
+        hard: 1048576
+    stop_grace_period: 5m
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 8m
+    command:
+      - cyankiwi/Qwen3.6-35B-A3B-AWQ-4bit
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --tensor-parallel-size
+      - "1"
+      - --gpu-memory-utilization
+      - "0.98"
+      - --max-model-len
+      - "4096"
+      - --max-num-seqs
+      - "1"
+      - --max-num-batched-tokens
+      - "2048"
+      - --enable-chunked-prefill
+      - --reasoning-parser
+      - qwen3
+      - --enable-auto-tool-choice
+      - --tool-call-parser
+      - qwen3_coder
+      - --language-model-only
+      - --dtype
+      - float16
+      - --served-model-name
+      - Qwen/Qwen3.6-35B-A3B
+
+  qwen3-embed-tei:
+    image: ghcr.io/huggingface/text-embeddings-inference:cuda-1.9
+    container_name: qwen3-embed-tei
+    restart: unless-stopped
+    init: true
+    gpus: all
+    network_mode: host
+    volumes:
+      - /root/.cache/huggingface/hub:/data
+    environment:
+      CUDA_VISIBLE_DEVICES: "1"
+    ulimits:
+      nofile:
+        soft: 1048576
+        hard: 1048576
+    stop_grace_period: 2m
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 5m
+    command:
+      - --model-id
+      - Qwen/Qwen3-Embedding-4B
+      - --hostname
+      - 0.0.0.0
+      - --port
+      - "8001"
+      - --dtype
+      - float16
+      - --huggingface-hub-cache
+      - /data
+      - --max-batch-tokens
+      - "8192"
+      - --served-model-name
+      - Qwen/Qwen3-Embedding-4B
+      - --json-output
+
+  bge-rerank-tei:
+    image: ghcr.io/huggingface/text-embeddings-inference:cuda-1.9
+    container_name: bge-rerank-tei
+    restart: unless-stopped
+    init: true
+    gpus: all
+    network_mode: host
+    volumes:
+      - /root/.cache/huggingface/hub:/data
+    environment:
+      CUDA_VISIBLE_DEVICES: "1"
+    ulimits:
+      nofile:
+        soft: 1048576
+        hard: 1048576
+    stop_grace_period: 2m
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 5m
+    command:
+      - --model-id
+      - BAAI/bge-reranker-v2-m3
+      - --hostname
+      - 0.0.0.0
+      - --port
+      - "8002"
+      - --dtype
+      - float16
+      - --huggingface-hub-cache
+      - /data
+      - --max-batch-tokens
+      - "4096"
+      - --served-model-name
+      - BAAI/bge-reranker-v2-m3
+      - --json-output

@@ -1,0 +1,51 @@
+name: deez1
+
+services:
+  qwen-llama:
+    image: ghcr.io/ggml-org/llama.cpp:server-vulkan
+    container_name: qwen-llama
+    restart: unless-stopped
+    init: true
+    network_mode: host
+    ipc: host
+    group_add:
+      - video
+    devices:
+      - /dev/dri:/dev/dri
+    volumes:
+      - /root/models/qwen-gguf-strix:/models
+    ulimits:
+      nofile:
+        soft: 1048576
+        hard: 1048576
+    stop_grace_period: 2m
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8010/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 2m
+    command:
+      - -m
+      - /models/Qwen3.6-35B-A3B-Q8_0.gguf
+      - -ngl
+      - "999"
+      - -fa
+      - "1"
+      - -ctk
+      - q8_0
+      - -ctv
+      - q8_0
+      - -ub
+      - "2048"
+      - -b
+      - "2048"
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8010"
