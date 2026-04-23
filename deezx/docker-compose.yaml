@@ -12,6 +12,8 @@ services:
     shm_size: "16gb"
     volumes:
       - /root/.cache/huggingface:/root/.cache/huggingface
+      - ./qwen3_coder_named_safe.py:/opt/plugins/qwen3_coder_named_safe.py:ro
+      - ./tool_chat_template_qwen3coder.jinja:/opt/plugins/tool_chat_template_qwen3coder.jinja:ro
     environment:
       CUDA_VISIBLE_DEVICES: "0"
       HF_HOME: /root/.cache/huggingface
@@ -52,8 +54,12 @@ services:
       - --reasoning-parser
       - qwen3
       - --enable-auto-tool-choice
+      - --tool-parser-plugin
+      - /opt/plugins/qwen3_coder_named_safe.py
       - --tool-call-parser
-      - qwen3_coder
+      - qwen3_coder_named_safe
+      - --chat-template
+      - /opt/plugins/tool_chat_template_qwen3coder.jinja
       - --language-model-only
       - --dtype
       - float16

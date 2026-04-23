@@ -1,9 +1,12 @@
 model_list:
   - model_name: thinking
     litellm_params:
-      model: openai/Qwen/Qwen3-VL-30B-A3B-Thinking
+      model: openai/TrevorJS/gemma-4-26B-A4B-it-uncensored
       api_base: http://192.168.1.114:8000/v1
       api_key: "none"
+      chat_template_kwargs:
+        enable_thinking: true
+      reasoning_format: deepseek
 
   - model_name: coding
     litellm_params:

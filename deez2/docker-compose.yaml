@@ -1,29 +1,21 @@
 name: deez2
 
 services:
-  qwen3vl-vllm:
-    image: vllm/vllm-openai-rocm:gemma4
-    container_name: qwen3vl-vllm
+  gemma4-llama:
+    image: ghcr.io/ggml-org/llama.cpp:server-vulkan
+    container_name: gemma4-llama
     restart: unless-stopped
     init: true
     network_mode: host
     ipc: host
-    privileged: true
-    cap_add:
-      - SYS_ADMIN
-      - SYS_PTRACE
+    group_add:
+      - video
     devices:
-      - /dev/kfd:/dev/kfd
       - /dev/dri:/dev/dri
-      - /dev/mem:/dev/mem
-    security_opt:
-      - seccomp=unconfined
-    shm_size: "16gb"
     volumes:
       - /root/.cache/huggingface:/root/.cache/huggingface
     environment:
       HF_HOME: /root/.cache/huggingface
-      VLLM_NO_USAGE_STATS: "1"
     ulimits:
       nofile:
         soft: 1048576
@@ -39,33 +31,36 @@ services:
       interval: 30s
       timeout: 10s
       retries: 10
-      start_period: 10m
+      start_period: 30m
     command:
-      - cyankiwi/Qwen3-VL-30B-A3B-Thinking-AWQ-4bit
+      - -hf
+      - AgentAnon/gemma-4-26B-A4B-it-uncensored-GGUF
+      - -hff
+      - gemma-4-26B-A4B-it-uncensored-Q8_0.gguf
+      - -a
+      - TrevorJS/gemma-4-26B-A4B-it-uncensored
+      - -c
+      - "262144"
+      - -ngl
+      - "999"
+      - -fa
+      - auto
+      - -ctk
+      - q8_0
+      - -ctv
+      - q8_0
+      - -ub
+      - "512"
+      - -b
+      - "1024"
+      - --parallel
+      - "1"
+      - --reasoning
+      - on
+      - --reasoning-format
+      - deepseek
+      - --jinja
       - --host
       - 0.0.0.0
       - --port
       - "8000"
-      - --tensor-parallel-size
-      - "1"
-      - --gpu-memory-utilization
-      - "0.95"
-      - --max-model-len
-      - "131072"
-      - --max-num-seqs
-      - "2"
-      - --max-num-batched-tokens
-      - "8192"
-      - --enable-prefix-caching
-      - --enable-chunked-prefill
-      - --limit-mm-per-prompt
-      - '{"image":1,"video":0,"audio":0}'
-      - --skip-mm-profiling
-      - --reasoning-parser
-      - qwen3
-      - --quantization
-      - compressed-tensors
-      - --dtype
-      - float16
-      - --served-model-name
-      - Qwen/Qwen3-VL-30B-A3B-Thinking
