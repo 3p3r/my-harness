@@ -173,7 +173,7 @@ try:
         {
           "role": "user",
           "content": (
-            ("alpha " * 28000)
+            ("alpha " * 25500)
             + "\n\nCall get_time with timezone UTC. Do not answer with plain text."
           ),
         }
@@ -268,60 +268,87 @@ run_parallel_get() {
 }
 
 DEEZ1_CHAT='{"model":"Qwen3.6-35B-A3B-Q8_0.gguf","messages":[{"role":"user","content":"Reply with ok."}],"max_tokens":64}'
+DEEZ1_TOOL=$(cat <<'JSON'
+{"model":"Qwen3.6-35B-A3B-Q8_0.gguf","messages":[{"role":"user","content":"Call get_time with timezone UTC. Do not answer with plain text."}],"tools":[{"type":"function","function":{"name":"get_time","description":"Get time for a timezone.","parameters":{"type":"object","properties":{"timezone":{"type":"string"}},"required":["timezone"]}}}],"tool_choice":{"type":"function","function":{"name":"get_time"}},"temperature":0,"max_tokens":256}
+JSON
+)
 DEEZ2_CHAT='{"model":"TrevorJS/gemma-4-26B-A4B-it-uncensored","messages":[{"role":"user","content":"Reply with exactly one word: ready."}],"chat_template_kwargs":{"enable_thinking":false},"max_tokens":96}'
+DEEZ2_TOOL=$(cat <<'JSON'
+{"model":"TrevorJS/gemma-4-26B-A4B-it-uncensored","messages":[{"role":"user","content":"Call get_time with timezone UTC. Do not answer with plain text."}],"tools":[{"type":"function","function":{"name":"get_time","description":"Get time for a timezone.","parameters":{"type":"object","properties":{"timezone":{"type":"string"}},"required":["timezone"]}}}],"tool_choice":{"type":"function","function":{"name":"get_time"}},"chat_template_kwargs":{"enable_thinking":false},"temperature":0,"max_tokens":256}
+JSON
+)
 DEEZX_TOOL=$(cat <<'JSON'
-{"model":"Qwen/Qwen3.6-35B-A3B","messages":[{"role":"user","content":"Call get_time with timezone UTC. Do not answer with plain text."}],"tools":[{"type":"function","function":{"name":"get_time","description":"Get time for a timezone.","parameters":{"type":"object","properties":{"timezone":{"type":"string"}},"required":["timezone"]}}}],"tool_choice":{"type":"function","function":{"name":"get_time"}},"temperature":0,"max_tokens":256}
+{"model":"Qwen/Qwen3-14B","messages":[{"role":"user","content":"Call get_time with timezone UTC. Do not answer with plain text."}],"tools":[{"type":"function","function":{"name":"get_time","description":"Get time for a timezone.","parameters":{"type":"object","properties":{"timezone":{"type":"string"}},"required":["timezone"]}}}],"tool_choice":{"type":"function","function":{"name":"get_time"}},"temperature":0,"max_tokens":256}
 JSON
 )
 
 PROXY_CODING='{"model":"coding","messages":[{"role":"user","content":"Reply with ok."}],"max_tokens":64}'
+PROXY_CODING_TOOL=$(cat <<'JSON'
+{"model":"coding","messages":[{"role":"user","content":"Call get_time with timezone UTC. Do not answer with plain text."}],"tools":[{"type":"function","function":{"name":"get_time","description":"Get time for a timezone.","parameters":{"type":"object","properties":{"timezone":{"type":"string"}},"required":["timezone"]}}}],"tool_choice":{"type":"function","function":{"name":"get_time"}},"temperature":0,"max_tokens":256}
+JSON
+)
 PROXY_THINKING='{"model":"thinking","messages":[{"role":"user","content":"Reply with exactly one word: ready."}],"chat_template_kwargs":{"enable_thinking":false},"max_tokens":96}'
+PROXY_THINKING_TOOL=$(cat <<'JSON'
+{"model":"thinking","messages":[{"role":"user","content":"Call get_time with timezone UTC. Do not answer with plain text."}],"tools":[{"type":"function","function":{"name":"get_time","description":"Get time for a timezone.","parameters":{"type":"object","properties":{"timezone":{"type":"string"}},"required":["timezone"]}}}],"tool_choice":{"type":"function","function":{"name":"get_time"}},"chat_template_kwargs":{"enable_thinking":false},"temperature":0,"max_tokens":256}
+JSON
+)
 PROXY_RESEARCH_TOOL=$(cat <<'JSON'
 {"model":"research","messages":[{"role":"user","content":"Call get_time with timezone UTC. Do not answer with plain text."}],"tools":[{"type":"function","function":{"name":"get_time","description":"Get time for a timezone.","parameters":{"type":"object","properties":{"timezone":{"type":"string"}},"required":["timezone"]}}}],"tool_choice":{"type":"function","function":{"name":"get_time"}},"temperature":0,"max_tokens":256}
 JSON
 )
-PROXY_EMBED='{"model":"embedding","input":["fleet smoke test"]}'
-PROXY_RERANK='{"model":"rerank","query":"gpu acceleration","documents":["This machine runs GPU inference.","This machine waters plants."]}'
+PROXY_HAIKU_TOOL=$(cat <<'JSON'
+{"model":"haiku","messages":[{"role":"user","content":"Call get_time with timezone UTC. Do not answer with plain text."}],"tools":[{"type":"function","function":{"name":"get_time","description":"Get time for a timezone.","parameters":{"type":"object","properties":{"timezone":{"type":"string"}},"required":["timezone"]}}}],"tool_choice":{"type":"function","function":{"name":"get_time"}},"temperature":0,"max_tokens":256}
+JSON
+)
 
 printf '== Basic ==\n'
 check_status deez1-health http://192.168.1.95:8010/health
 check_get_json deez1-models http://192.168.1.95:8010/v1/models '.data | length > 0'
 check_post_json deez1-chat http://192.168.1.95:8010/v1/chat/completions "$DEEZ1_CHAT" '.choices[0].message.role == "assistant"'
+check_post_json deez1-tool-call http://192.168.1.95:8010/v1/chat/completions "$DEEZ1_TOOL" '.choices[0].message.tool_calls[0].function.name == "get_time" and (.choices[0].message.tool_calls[0].function.arguments | fromjson | .timezone) == "UTC"'
 
 check_get_json deez2-models http://192.168.1.114:8000/v1/models '.data[0].id == "TrevorJS/gemma-4-26B-A4B-it-uncensored"'
 check_python_long_context deez2-props http://192.168.1.114:8000/v1/chat/completions TrevorJS/gemma-4-26B-A4B-it-uncensored 262144
 check_post_json deez2-chat http://192.168.1.114:8000/v1/chat/completions "$DEEZ2_CHAT" '.choices[0].message.role == "assistant"'
+check_post_json deez2-tool-call http://192.168.1.114:8000/v1/chat/completions "$DEEZ2_TOOL" '.choices[0].message.tool_calls[0].function.name == "get_time" and (.choices[0].message.tool_calls[0].function.arguments | fromjson | .timezone) == "UTC" and ((.choices[0].message.content // "") | contains("<think>") | not)'
 check_python_json deez2-reasoning '.choices[0].message.reasoning_content != null and (.choices[0].message.content | ascii_downcase | contains("9.8"))' gemma4-reasoning http://192.168.1.114:8000/v1/chat/completions TrevorJS/gemma-4-26B-A4B-it-uncensored
 check_python_json deez2-multimodal '.choices[0].message.content | ascii_downcase | test("red")' gemma4-mm http://192.168.1.114:8000/v1/chat/completions TrevorJS/gemma-4-26B-A4B-it-uncensored
 check_python_json deez2-long-context '.choices[0].message.content | ascii_downcase | test("ready")' gemma4-longctx http://192.168.1.114:8000/v1/chat/completions TrevorJS/gemma-4-26B-A4B-it-uncensored
 
 check_status deezx-health http://192.168.1.161:8000/health
-check_get_json deezx-models http://192.168.1.161:8000/v1/models '.data[0].id == "Qwen/Qwen3.6-35B-A3B"'
-check_python_long_context deezx-props http://192.168.1.161:8000/v1/chat/completions Qwen/Qwen3.6-35B-A3B 32768
-check_status deezx-embed-health http://192.168.1.161:8001/health
-check_status deezx-rerank-health http://192.168.1.161:8002/health
-check_post_json_once deezx-tool-call http://192.168.1.161:8000/v1/chat/completions "$DEEZX_TOOL" '.choices[0].message.tool_calls[0].function.name == "get_time"'
-check_python_json deezx-tool-long-context '.usage.prompt_tokens > 27000 and .choices[0].message.tool_calls[0].function.name == "get_time"' qwen-tool-longctx http://192.168.1.161:8000/v1/chat/completions Qwen/Qwen3.6-35B-A3B
+check_get_json deezx-models-a http://192.168.1.161:8000/v1/models '.data[0].id == "Qwen/Qwen3-14B"'
+check_python_long_context deezx-props-a http://192.168.1.161:8000/v1/chat/completions Qwen/Qwen3-14B 32768
+check_status deezx-haiku-health http://192.168.1.161:8001/health
+check_get_json deezx-models-b http://192.168.1.161:8001/v1/models '.data[0].id == "Qwen/Qwen3-14B"'
+check_python_long_context deezx-props-b http://192.168.1.161:8001/v1/chat/completions Qwen/Qwen3-14B 32768
+check_post_json_once deezx-tool-call-a http://192.168.1.161:8000/v1/chat/completions "$DEEZX_TOOL" '.choices[0].message.tool_calls[0].function.name == "get_time"'
+check_post_json_once deezx-tool-call-b http://192.168.1.161:8001/v1/chat/completions "$DEEZX_TOOL" '.choices[0].message.tool_calls[0].function.name == "get_time"'
+check_python_json deezx-tool-long-context-a '.usage.prompt_tokens > 25000 and .choices[0].message.tool_calls[0].function.name == "get_time"' qwen-tool-longctx http://192.168.1.161:8000/v1/chat/completions Qwen/Qwen3-14B
+check_python_json deezx-tool-long-context-b '.usage.prompt_tokens > 25000 and .choices[0].message.tool_calls[0].function.name == "get_time"' qwen-tool-longctx http://192.168.1.161:8001/v1/chat/completions Qwen/Qwen3-14B
 
-check_get_json deezr-models http://192.168.1.85:4000/v1/models '.data | length == 9'
+check_get_json deezr-models http://192.168.1.85:4000/v1/models '([.data[].id] | index("thinking")) != null and ([.data[].id] | index("coding")) != null and ([.data[].id] | index("research")) != null'
 check_post_json deezr-coding http://192.168.1.85:4000/v1/chat/completions "$PROXY_CODING" '.choices[0].message.role == "assistant"'
+check_post_json deezr-coding-tool-call http://192.168.1.85:4000/v1/chat/completions "$PROXY_CODING_TOOL" '.choices[0].message.tool_calls[0].function.name == "get_time" and (.choices[0].message.tool_calls[0].function.arguments | fromjson | .timezone) == "UTC" and ((.choices[0].message.content // "") | contains("<think>") | not)'
 check_post_json deezr-thinking http://192.168.1.85:4000/v1/chat/completions "$PROXY_THINKING" '.choices[0].message.role == "assistant"'
+check_post_json deezr-thinking-tool-call http://192.168.1.85:4000/v1/chat/completions "$PROXY_THINKING_TOOL" '.choices[0].message.tool_calls[0].function.name == "get_time" and (.choices[0].message.tool_calls[0].function.arguments | fromjson | .timezone) == "UTC" and ((.choices[0].message.content // "") | contains("<think>") | not)'
 check_python_json deezr-thinking-multimodal '.choices[0].message.content | ascii_downcase | test("red")' gemma4-mm http://192.168.1.85:4000/v1/chat/completions thinking
-check_post_json deezr-research-tool-call http://192.168.1.85:4000/v1/chat/completions "$PROXY_RESEARCH_TOOL" '.choices[0].message.tool_calls[0].function.name == "get_time"'
-check_post_json deezr-embedding http://192.168.1.85:4000/v1/embeddings "$PROXY_EMBED" '.data[0].embedding | length > 1000'
-check_post_json deezr-rerank http://192.168.1.85:4000/rerank "$PROXY_RERANK" '.results[0].index == 0 and .results[0].relevance_score > .results[1].relevance_score'
+check_post_json deezr-research-tool-call http://192.168.1.85:4000/v1/chat/completions "$PROXY_RESEARCH_TOOL" '.choices[0].message.tool_calls[0].function.name == "get_time" and ((.choices[0].message.content // "") | contains("<think>") | not)'
+check_post_json deezr-haiku-tool-call http://192.168.1.85:4000/v1/chat/completions "$PROXY_HAIKU_TOOL" '.choices[0].message.tool_calls[0].function.name == "get_time" and ((.choices[0].message.content // "") | contains("<think>") | not)'
 
 printf '== Repetition ==\n'
 for iteration in 1 2 3; do
-  check_post_json_once "deezx-tool-call-$iteration" http://192.168.1.161:8000/v1/chat/completions "$DEEZX_TOOL" '.choices[0].message.tool_calls[0].function.name == "get_time"'
-  check_post_json "deezr-tool-call-$iteration" http://192.168.1.85:4000/v1/chat/completions "$PROXY_RESEARCH_TOOL" '.choices[0].message.tool_calls[0].function.name == "get_time"'
-  check_post_json "deezr-embed-$iteration" http://192.168.1.85:4000/v1/embeddings "$PROXY_EMBED" '.data[0].embedding | length > 1000'
-  check_post_json "deezr-rerank-$iteration" http://192.168.1.85:4000/rerank "$PROXY_RERANK" '.results[0].index == 0 and .results[0].relevance_score > .results[1].relevance_score'
+  check_post_json_once "deez1-tool-call-$iteration" http://192.168.1.95:8010/v1/chat/completions "$DEEZ1_TOOL" '.choices[0].message.tool_calls[0].function.name == "get_time" and (.choices[0].message.tool_calls[0].function.arguments | fromjson | .timezone) == "UTC"'
+  check_post_json "deezr-coding-tool-call-$iteration" http://192.168.1.85:4000/v1/chat/completions "$PROXY_CODING_TOOL" '.choices[0].message.tool_calls[0].function.name == "get_time" and (.choices[0].message.tool_calls[0].function.arguments | fromjson | .timezone) == "UTC" and ((.choices[0].message.content // "") | contains("<think>") | not)'
+  check_post_json "deezr-thinking-tool-call-$iteration" http://192.168.1.85:4000/v1/chat/completions "$PROXY_THINKING_TOOL" '.choices[0].message.tool_calls[0].function.name == "get_time" and (.choices[0].message.tool_calls[0].function.arguments | fromjson | .timezone) == "UTC" and ((.choices[0].message.content // "") | contains("<think>") | not)'
+  check_post_json_once "deezx-tool-call-a-$iteration" http://192.168.1.161:8000/v1/chat/completions "$DEEZX_TOOL" '.choices[0].message.tool_calls[0].function.name == "get_time"'
+  check_post_json_once "deezx-tool-call-b-$iteration" http://192.168.1.161:8001/v1/chat/completions "$DEEZX_TOOL" '.choices[0].message.tool_calls[0].function.name == "get_time"'
+  check_post_json "deezr-research-tool-call-$iteration" http://192.168.1.85:4000/v1/chat/completions "$PROXY_RESEARCH_TOOL" '.choices[0].message.tool_calls[0].function.name == "get_time" and ((.choices[0].message.content // "") | contains("<think>") | not)'
+  check_post_json "deezr-haiku-tool-call-$iteration" http://192.168.1.85:4000/v1/chat/completions "$PROXY_HAIKU_TOOL" '.choices[0].message.tool_calls[0].function.name == "get_time" and ((.choices[0].message.content // "") | contains("<think>") | not)'
 done
 
 printf '== Parallel ==\n'
-run_parallel_get deezr-models-parallel 12 4 http://192.168.1.85:4000/v1/models '.data | length == 9'
-run_parallel_json_post deezr-embeddings-parallel 6 3 http://192.168.1.85:4000/v1/embeddings "$PROXY_EMBED" '.data[0].embedding | length > 1000'
-run_parallel_json_post deezr-rerank-parallel 6 3 http://192.168.1.85:4000/rerank "$PROXY_RERANK" '.results[0].index == 0 and .results[0].relevance_score > .results[1].relevance_score'
+run_parallel_get deezr-models-parallel 12 4 http://192.168.1.85:4000/v1/models '([.data[].id] | index("thinking")) != null and ([.data[].id] | index("coding")) != null and ([.data[].id] | index("research")) != null'
+run_parallel_json_post deezr-research-parallel 6 3 http://192.168.1.85:4000/v1/chat/completions "$PROXY_RESEARCH_TOOL" '.choices[0].message.tool_calls[0].function.name == "get_time"'
+run_parallel_json_post deezr-haiku-parallel 6 3 http://192.168.1.85:4000/v1/chat/completions "$PROXY_HAIKU_TOOL" '.choices[0].message.tool_calls[0].function.name == "get_time"'
 
 printf 'FLEET_SMOKE_OK\n'

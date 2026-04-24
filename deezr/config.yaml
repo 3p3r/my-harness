@@ -13,46 +13,35 @@ model_list:
       model: openai/Qwen3.6-35B-A3B-Q8_0.gguf
       api_base: http://192.168.1.95:8010/v1
       api_key: "none"
+      chat_template_kwargs:
+        enable_thinking: false
+      reasoning_format: deepseek
 
   - model_name: research
     litellm_params:
-      model: openai/Qwen/Qwen3.6-35B-A3B
+      model: openai/Qwen/Qwen3-14B
       api_base: http://192.168.1.161:8000/v1
       api_key: "none"
+      chat_template_kwargs:
+        enable_thinking: false
+      reasoning_format: deepseek
 
-  - model_name: embedding
+  - model_name: research
     litellm_params:
-      model: openai_like/Qwen/Qwen3-Embedding-4B
+      model: openai/Qwen/Qwen3-14B
       api_base: http://192.168.1.161:8001/v1
       api_key: "none"
-    model_info:
-      mode: embedding
-
-  - model_name: rerank
-    litellm_params:
-      model: huggingface/BAAI/bge-reranker-v2-m3
-      api_base: http://192.168.1.161:8002
-      api_key: "none"
-    model_info:
-      mode: rerank
+      chat_template_kwargs:
+        enable_thinking: false
+      reasoning_format: deepseek
 
 router_settings:
   model_group_alias:
     opus: thinking
     coder: coding
     haiku: research
-    embed: embedding
 
 litellm_settings:
   drop_params: true
-  request_timeout: 300
+  request_timeout: 180
   num_retries: 2
-
-general_settings:
-  pass_through_endpoints:
-    - path: /tei/rerank
-      target: http://192.168.1.161:8002/rerank
-      methods: [POST]
-      headers:
-        content-type: application/json
-        accept: application/json

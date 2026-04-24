@@ -14,6 +14,7 @@ services:
       - /dev/dri:/dev/dri
     volumes:
       - /root/models/qwen-gguf-strix:/models
+      - ./tool_chat_template_qwen3coder.jinja:/opt/plugins/tool_chat_template_qwen3coder.jinja:ro
     ulimits:
       nofile:
         soft: 1048576
@@ -45,6 +46,13 @@ services:
       - "2048"
       - -b
       - "2048"
+      - --reasoning
+      - on
+      - --reasoning-format
+      - deepseek
+      - --jinja
+      - --chat-template-file
+      - /opt/plugins/tool_chat_template_qwen3coder.jinja
       - --host
       - 0.0.0.0
       - --port

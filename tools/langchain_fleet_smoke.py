@@ -18,23 +18,21 @@ from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.messages import HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.tools import tool
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_openai import ChatOpenAI
 
 
 API_KEY = "none"
 DEEZ1_BASE = "http://192.168.1.95:8010/v1"
 DEEZ2_BASE = "http://192.168.1.114:8000/v1"
 DEEZX_BASE = "http://192.168.1.161:8000/v1"
-DEEZX_EMBED_BASE = "http://192.168.1.161:8001/v1"
-DEEZX_RERANK_BASE = "http://192.168.1.161:8002"
+DEEZX_FAST_B_BASE = "http://192.168.1.161:8001/v1"
 DEEZR_BASE = "http://192.168.1.85:4000/v1"
-DEEZR_RERANK_BASE = "http://192.168.1.85:4000"
 
 CODING_MODEL = "Qwen3.6-35B-A3B-Q8_0.gguf"
 THINKING_MODEL = "TrevorJS/gemma-4-26B-A4B-it-uncensored"
-RESEARCH_MODEL = "Qwen/Qwen3.6-35B-A3B"
-EMBED_MODEL = "Qwen/Qwen3-Embedding-4B"
-RERANK_MODEL = "BAAI/bge-reranker-v2-m3"
+RESEARCH_MODEL = "Qwen/Qwen3-14B"
+
+RESEARCH_SHORT_TOOL_MIN_PROMPT_TOKENS = 150
 
 
 class SmokeFailure(RuntimeError):
@@ -67,10 +65,6 @@ def make_png(width: int, height: int, rgb: tuple[int, int, int]) -> bytes:
     idat = png_chunk(b"IDAT", zlib.compress(raw, 9))
     iend = png_chunk(b"IEND", b"")
     return header + ihdr + idat + iend
-
-
-def max_abs_delta(left: list[float], right: list[float]) -> float:
-    return max(abs(left_value - right_value) for left_value, right_value in zip(left, right))
 
 
 def make_agent_executor(llm: ChatOpenAI) -> AgentExecutor:
@@ -133,22 +127,9 @@ class LangChainFleetSmoke:
         )
 
         self.research_direct = self.make_chat(RESEARCH_MODEL, DEEZX_BASE, timeout=180)
+        self.research_direct_b = self.make_chat(RESEARCH_MODEL, DEEZX_FAST_B_BASE, timeout=180)
         self.research_routed = self.make_chat("research", DEEZR_BASE, timeout=180)
-
-        self.embed_direct = OpenAIEmbeddings(
-            model=EMBED_MODEL,
-            base_url=DEEZX_EMBED_BASE,
-            api_key=API_KEY,
-            max_retries=0,
-            request_timeout=120,
-        )
-        self.embed_routed = OpenAIEmbeddings(
-            model="embedding",
-            base_url=DEEZR_BASE,
-            api_key=API_KEY,
-            max_retries=0,
-            request_timeout=120,
-        )
+        self.haiku_routed = self.make_chat("haiku", DEEZR_BASE, timeout=180)
 
     @staticmethod
     def make_chat(
@@ -182,24 +163,6 @@ class LangChainFleetSmoke:
         response.raise_for_status()
         return response.json()
 
-    def routed_rerank(self, query: str, documents: list[str]) -> dict[str, Any]:
-        response = self.http.post(
-            f"{DEEZR_RERANK_BASE}/rerank",
-            json={"model": "rerank", "query": query, "documents": documents},
-            timeout=60,
-        )
-        response.raise_for_status()
-        return response.json()
-
-    def direct_rerank(self, query: str, texts: list[str]) -> list[dict[str, Any]]:
-        response = self.http.post(
-            f"{DEEZX_RERANK_BASE}/rerank",
-            json={"query": query, "texts": texts},
-            timeout=60,
-        )
-        response.raise_for_status()
-        return response.json()
-
     def multimodal_message(self, prompt: str) -> HumanMessage:
         return HumanMessage(
             content=[
@@ -218,19 +181,22 @@ class LangChainFleetSmoke:
             ("topology-snapshot", self.test_topology_snapshot),
             ("coding-direct-chat", self.test_coding_direct_chat),
             ("coding-routed-chat", self.test_coding_routed_chat),
+            ("coding-direct-bound-tool", self.test_coding_direct_bound_tool),
+            ("coding-routed-bound-tool", self.test_coding_routed_bound_tool),
             ("thinking-direct-reasoning", self.test_thinking_direct_reasoning),
+            ("thinking-direct-bound-tool", self.test_thinking_direct_bound_tool),
             ("thinking-direct-multimodal", self.test_thinking_direct_multimodal),
+            ("thinking-routed-bound-tool", self.test_thinking_routed_bound_tool),
             ("thinking-routed-multimodal", self.test_thinking_routed_multimodal),
             ("thinking-direct-long-window", self.test_thinking_direct_long_window),
             ("research-direct-agent-tool", self.test_research_direct_agent_tool),
+            ("research-b-direct-agent-tool", self.test_research_b_direct_agent_tool),
             ("research-routed-agent-tool", self.test_research_routed_agent_tool),
+            ("haiku-routed-agent-tool", self.test_haiku_routed_agent_tool),
             ("research-direct-bound-tool", self.test_research_direct_bound_tool),
-            ("research-direct-long-tool", self.test_research_direct_long_tool),
+            ("research-b-direct-bound-tool", self.test_research_b_direct_bound_tool),
             ("research-routed-long-tool", self.test_research_routed_long_tool),
-            ("embeddings-direct-similarity", self.test_embeddings_direct_similarity),
-            ("embeddings-routed-similarity", self.test_embeddings_routed_similarity),
-            ("rerank-direct-native", self.test_rerank_direct_native),
-            ("rerank-routed-litellm", self.test_rerank_routed_litellm),
+            ("haiku-routed-long-tool", self.test_haiku_routed_long_tool),
             ("router-parallel-burst", self.test_router_parallel_burst),
         ]
 
@@ -266,20 +232,27 @@ class LangChainFleetSmoke:
 
     def test_topology_snapshot(self) -> None:
         models = self.get_json(f"{DEEZR_BASE}/models")
-        self.require(len(models["data"]) == 9, "router model inventory changed")
+        model_ids = {entry["id"] for entry in models["data"]}
+        self.require(
+            {"thinking", "coding", "research"}.issubset(model_ids),
+            f"router model inventory changed: {sorted(model_ids)!r}",
+        )
 
-        props = self.get_json("http://192.168.1.161:8000/props")
-        n_ctx = props.get("default_generation_settings", {}).get("n_ctx", 0)
-        alias = props.get("model_alias")
-        self.require(n_ctx >= 32768, f"expected deezx n_ctx >= 32768, got {n_ctx}")
-        self.require(alias == RESEARCH_MODEL, f"unexpected deezx alias {alias!r}")
+        for url in [
+            "http://192.168.1.161:8000/props",
+            "http://192.168.1.161:8001/props",
+        ]:
+            props = self.get_json(url)
+            n_ctx = props.get("default_generation_settings", {}).get("n_ctx", 0)
+            alias = props.get("model_alias")
+            self.require(n_ctx >= 32768, f"expected deezx n_ctx >= 32768, got {n_ctx}")
+            self.require(alias == RESEARCH_MODEL, f"unexpected deezx alias {alias!r}")
 
         for url in [
             "http://192.168.1.95:8010/health",
             "http://192.168.1.114:8000/health",
             "http://192.168.1.161:8000/health",
             "http://192.168.1.161:8001/health",
-            "http://192.168.1.161:8002/health",
             "http://192.168.1.85:4000/health/liveliness",
         ]:
             response = self.http.get(url)
@@ -297,6 +270,12 @@ class LangChainFleetSmoke:
         )
         self.require("42" in str(message.content), f"unexpected coding routed reply {message.content!r}")
 
+    def test_coding_direct_bound_tool(self) -> None:
+        self.run_bound_tool_smoke(self.coding_direct, min_prompt_tokens=200, expect_clean_content=False)
+
+    def test_coding_routed_bound_tool(self) -> None:
+        self.run_bound_tool_smoke(self.coding_routed, min_prompt_tokens=200)
+
     def test_thinking_direct_reasoning(self) -> None:
         message = self.thinking_direct_reasoning.invoke(
             [HumanMessage(content="Which is greater, 9.11 or 9.8? Answer briefly.")]
@@ -304,12 +283,18 @@ class LangChainFleetSmoke:
         content = str(message.content).lower()
         self.require("9.8" in content, f"unexpected reasoning answer {message.content!r}")
 
+    def test_thinking_direct_bound_tool(self) -> None:
+        self.run_bound_tool_smoke(self.thinking_direct, min_prompt_tokens=70)
+
     def test_thinking_direct_multimodal(self) -> None:
         message = self.thinking_direct.invoke(
             [self.multimodal_message("What color is this square? Answer with one word.")]
         )
         content = str(message.content).lower()
         self.require("red" in content, f"unexpected multimodal direct answer {message.content!r}")
+
+    def test_thinking_routed_bound_tool(self) -> None:
+        self.run_bound_tool_smoke(self.thinking_routed, min_prompt_tokens=70)
 
     def test_thinking_routed_multimodal(self) -> None:
         message = self.thinking_routed.invoke(
@@ -333,16 +318,19 @@ class LangChainFleetSmoke:
         self.require(prompt_tokens > 39000, f"expected long prompt token count, got {prompt_tokens}")
 
     def test_research_direct_agent_tool(self) -> None:
-        executor = make_agent_executor(self.research_direct)
-        result = executor.invoke(
-            {
-                "input": "Use get_time with timezone UTC and report the returned marker exactly.",
-            }
-        )
-        self.assert_agent_tool_result(result)
+        self.run_agent_tool_smoke(self.research_direct)
+
+    def test_research_b_direct_agent_tool(self) -> None:
+        self.run_agent_tool_smoke(self.research_direct_b)
 
     def test_research_routed_agent_tool(self) -> None:
-        executor = make_agent_executor(self.research_routed)
+        self.run_agent_tool_smoke(self.research_routed)
+
+    def test_haiku_routed_agent_tool(self) -> None:
+        self.run_agent_tool_smoke(self.haiku_routed)
+
+    def run_agent_tool_smoke(self, llm: ChatOpenAI) -> None:
+        executor = make_agent_executor(llm)
         result = executor.invoke(
             {
                 "input": "Use get_time with timezone UTC and report the returned marker exactly.",
@@ -361,43 +349,55 @@ class LangChainFleetSmoke:
         )
 
     def test_research_direct_bound_tool(self) -> None:
-        llm_with_tools = self.research_direct.bind_tools([get_time])
-        message = llm_with_tools.invoke(
-            [
-                HumanMessage(
-                    content="Call get_time with timezone UTC. Do not answer with plain text."
-                )
-            ]
+        self.run_bound_tool_smoke(
+            self.research_direct,
+            min_prompt_tokens=RESEARCH_SHORT_TOOL_MIN_PROMPT_TOKENS,
+            expect_clean_content=False,
         )
-        self.assert_tool_call(message, min_prompt_tokens=200)
 
-    def test_research_direct_long_tool(self) -> None:
-        llm_with_tools = self.research_direct.bind_tools([get_time])
-        filler = "alpha " * 28000
-        message = llm_with_tools.invoke(
-            [
-                HumanMessage(
-                    content=f"{filler}\n\nCall get_time with timezone UTC. Do not answer with plain text."
-                )
-            ]
+    def test_research_b_direct_bound_tool(self) -> None:
+        self.run_bound_tool_smoke(
+            self.research_direct_b,
+            min_prompt_tokens=RESEARCH_SHORT_TOOL_MIN_PROMPT_TOKENS,
+            expect_clean_content=False,
         )
-        self.assert_tool_call(message, min_prompt_tokens=27000)
 
     def test_research_routed_long_tool(self) -> None:
-        llm_with_tools = self.research_routed.bind_tools([get_time])
-        filler = "alpha " * 28000
-        message = llm_with_tools.invoke(
-            [
-                HumanMessage(
-                    content=f"{filler}\n\nCall get_time with timezone UTC. Do not answer with plain text."
-                )
-            ]
-        )
-        self.assert_tool_call(message, min_prompt_tokens=27000)
+        self.run_bound_tool_smoke(self.research_routed, min_prompt_tokens=25000, filler_words=25500)
 
-    def assert_tool_call(self, message: Any, min_prompt_tokens: int) -> None:
+    def test_haiku_routed_long_tool(self) -> None:
+        self.run_bound_tool_smoke(self.haiku_routed, min_prompt_tokens=25000, filler_words=25500)
+
+    def run_bound_tool_smoke(
+        self,
+        llm: ChatOpenAI,
+        min_prompt_tokens: int,
+        filler_words: int = 0,
+        expect_clean_content: bool = True,
+    ) -> None:
+        llm_with_tools = llm.bind_tools([get_time])
+        content = "Call get_time with timezone UTC. Do not answer with plain text."
+        if filler_words:
+            filler = "alpha " * filler_words
+            content = f"{filler}\n\n{content}"
+        message = llm_with_tools.invoke([HumanMessage(content=content)])
+        self.assert_tool_call(
+            message,
+            min_prompt_tokens=min_prompt_tokens,
+            expect_clean_content=expect_clean_content,
+        )
+
+    def assert_tool_call(
+        self,
+        message: Any,
+        min_prompt_tokens: int,
+        expect_clean_content: bool,
+    ) -> None:
         tool_calls = getattr(message, "tool_calls", [])
         self.require(tool_calls, "expected at least one tool call")
+        content = str(getattr(message, "content", "") or "")
+        if expect_clean_content:
+            self.require("<think>" not in content, f"raw think tags leaked in content {content!r}")
         first_call = tool_calls[0]
         self.require(first_call["name"] == "get_time", f"unexpected tool call {first_call!r}")
         self.require(
@@ -410,107 +410,27 @@ class LangChainFleetSmoke:
             f"expected prompt_tokens >= {min_prompt_tokens}, got {prompt_tokens}",
         )
 
-    def test_embeddings_direct_similarity(self) -> None:
-        documents = ["gpu inference path", "gpu inference path"]
-        document_vectors = self.embed_direct.embed_documents(documents)
-        query_vector_first = self.embed_direct.embed_query("gpu inference path")
-        query_vector_second = self.embed_direct.embed_query("gpu inference path")
-        self.require(len(document_vectors) == 2, "expected two direct embedding vectors")
-        self.require(len(document_vectors[0]) > 1000, "unexpected direct embedding dimension")
-        self.require(
-            max_abs_delta(document_vectors[0], document_vectors[1]) == 0.0,
-            "direct embeddings for identical text were not identical",
-        )
-        self.require(
-            max_abs_delta(query_vector_first, query_vector_second) == 0.0,
-            "direct query embeddings for identical text were not identical",
-        )
-
-    def test_embeddings_routed_similarity(self) -> None:
-        documents = ["gpu inference path", "gpu inference path"]
-        document_vectors = self.embed_routed.embed_documents(documents)
-        query_vector_first = self.embed_routed.embed_query("gpu inference path")
-        query_vector_second = self.embed_routed.embed_query("gpu inference path")
-        direct_document_vectors = self.embed_direct.embed_documents(documents)
-        direct_query_vector = self.embed_direct.embed_query("gpu inference path")
-        self.require(len(document_vectors) == 2, "expected two routed embedding vectors")
-        self.require(len(document_vectors[0]) > 1000, "unexpected routed embedding dimension")
-        self.require(
-            max_abs_delta(document_vectors[0], document_vectors[1]) == 0.0,
-            "routed embeddings for identical text were not identical",
-        )
-        self.require(
-            max_abs_delta(query_vector_first, query_vector_second) == 0.0,
-            "routed query embeddings for identical text were not identical",
-        )
-        self.require(
-            max_abs_delta(document_vectors[0], direct_document_vectors[0]) < 1e-6,
-            "direct and routed batched document embeddings diverged unexpectedly",
-        )
-        self.require(
-            max_abs_delta(document_vectors[1], direct_document_vectors[1]) < 1e-6,
-            "direct and routed document embeddings diverged unexpectedly",
-        )
-        self.require(
-            max_abs_delta(query_vector_first, direct_query_vector) < 1e-6,
-            "direct and routed query embeddings diverged unexpectedly",
-        )
-
-    def test_rerank_direct_native(self) -> None:
-        results = self.direct_rerank(
-            "gpu acceleration",
-            ["This machine runs GPU inference.", "This machine waters plants."],
-        )
-        self.require(len(results) == 2, f"unexpected direct rerank payload {results!r}")
-        self.require(results[0]["index"] == 0, f"unexpected direct top rerank result {results!r}")
-        self.require(results[0]["score"] > results[1]["score"], f"unexpected direct scores {results!r}")
-
-    def test_rerank_routed_litellm(self) -> None:
-        response = self.routed_rerank(
-            "gpu acceleration",
-            ["This machine runs GPU inference.", "This machine waters plants."],
-        )
-        results = response.get("results", [])
-        self.require(len(results) == 2, f"unexpected routed rerank payload {response!r}")
-        self.require(results[0]["index"] == 0, f"unexpected routed top rerank result {response!r}")
-        self.require(
-            results[0]["relevance_score"] > results[1]["relevance_score"],
-            f"unexpected routed scores {response!r}",
-        )
-
     def test_router_parallel_burst(self) -> None:
         def coding_call() -> str:
-            reply = self.coding_routed.invoke([HumanMessage(content="Reply with exactly one token: 42")])
-            self.require("42" in str(reply.content), f"parallel coding reply {reply.content!r}")
+            self.run_bound_tool_smoke(self.coding_routed, min_prompt_tokens=200)
             return "coding"
 
         def research_call() -> str:
-            llm_with_tools = self.research_routed.bind_tools([get_time])
-            reply = llm_with_tools.invoke(
-                [
-                    HumanMessage(
-                        content="Call get_time with timezone UTC. Do not answer with plain text."
-                    )
-                ]
+            self.run_bound_tool_smoke(
+                self.research_routed,
+                min_prompt_tokens=RESEARCH_SHORT_TOOL_MIN_PROMPT_TOKENS,
             )
-            self.assert_tool_call(reply, min_prompt_tokens=200)
             return "research"
 
-        def embed_call() -> str:
-            vector = self.embed_routed.embed_query("parallel embedding smoke")
-            self.require(len(vector) > 1000, "parallel embedding dimension too small")
-            return "embedding"
-
-        def rerank_call() -> str:
-            response = self.routed_rerank(
-                "gpu acceleration",
-                ["This machine runs GPU inference.", "This machine waters plants."],
+        def haiku_call() -> str:
+            self.run_bound_tool_smoke(
+                self.haiku_routed,
+                min_prompt_tokens=RESEARCH_SHORT_TOOL_MIN_PROMPT_TOKENS,
             )
-            self.require(response["results"][0]["index"] == 0, f"parallel rerank response {response!r}")
-            return "rerank"
+            return "haiku"
 
-        tasks = [coding_call, research_call, embed_call, rerank_call] * 2
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        tasks = [coding_call, research_call, haiku_call] * 3
+        with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
             futures = [executor.submit(task) for task in tasks]
             completed = [future.result(timeout=240) for future in futures]
         self.require(len(completed) == len(tasks), "parallel burst lost work")

@@ -1,19 +1,18 @@
 name: deezx
 
 services:
-  qwen36-research-llama:
+  qwen36-research-a-llama:
     image: ghcr.io/ggml-org/llama.cpp:server-cuda
-    container_name: qwen36-research-llama
+    container_name: qwen36-research-a-llama
     restart: unless-stopped
     init: true
     gpus: all
     network_mode: host
     volumes:
-      - /root/.cache/huggingface:/root/.cache/huggingface
+      - /root/models/qwen3-14b-gguf:/models:ro
       - ./tool_chat_template_qwen3coder.jinja:/opt/plugins/tool_chat_template_qwen3coder.jinja:ro
     environment:
-      CUDA_VISIBLE_DEVICES: "0,1"
-      HF_HOME: /root/.cache/huggingface
+      CUDA_VISIBLE_DEVICES: "0"
     ulimits:
       nofile:
         soft: 1048576
@@ -29,21 +28,17 @@ services:
       interval: 30s
       timeout: 10s
       retries: 10
-      start_period: 30m
+      start_period: 20m
     command:
-      - -hf
-      - bartowski/Qwen_Qwen3.6-35B-A3B-GGUF:Q8_0
-      - -hff
-      - Qwen_Qwen3.6-35B-A3B-Q8_0.gguf
+      - -m
+      - /models/Qwen_Qwen3-14B-Q8_0.gguf
       - --no-mmproj
       - -a
-      - Qwen/Qwen3.6-35B-A3B
+      - Qwen/Qwen3-14B
       - -c
       - "32768"
       - -dev
-      - CUDA0,CUDA1
-      - -sm
-      - layer
+      - CUDA0
       - -ngl
       - all
       - -fa
@@ -53,7 +48,7 @@ services:
       - -ctv
       - q8_0
       - -ub
-      - "512"
+      - "1024"
       - -b
       - "1024"
       - -np
@@ -62,8 +57,6 @@ services:
       - on
       - --reasoning-format
       - deepseek
-      - --reasoning-budget
-      - "0"
       - --jinja
       - --chat-template-file
       - /opt/plugins/tool_chat_template_qwen3coder.jinja
@@ -72,84 +65,66 @@ services:
       - --port
       - "8000"
 
-  qwen3-embed-tei:
-    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.9
-    container_name: qwen3-embed-tei
+  qwen36-research-b-llama:
+    image: ghcr.io/ggml-org/llama.cpp:server-cuda
+    container_name: qwen36-research-b-llama
     restart: unless-stopped
     init: true
+    gpus: all
     network_mode: host
     volumes:
-      - /root/.cache/huggingface/hub:/data
+      - /root/models/qwen3-14b-gguf:/models:ro
+      - ./tool_chat_template_qwen3coder.jinja:/opt/plugins/tool_chat_template_qwen3coder.jinja:ro
+    environment:
+      CUDA_VISIBLE_DEVICES: "1"
     ulimits:
       nofile:
         soft: 1048576
         hard: 1048576
-    stop_grace_period: 2m
+    stop_grace_period: 5m
     logging:
       driver: json-file
       options:
-        max-size: "50m"
+        max-size: "100m"
         max-file: "3"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8001/health"]
       interval: 30s
       timeout: 10s
       retries: 10
-      start_period: 15m
+      start_period: 20m
     command:
-      - --model-id
-      - Qwen/Qwen3-Embedding-4B
-      - --hostname
+      - -m
+      - /models/Qwen_Qwen3-14B-Q8_0.gguf
+      - --no-mmproj
+      - -a
+      - Qwen/Qwen3-14B
+      - -c
+      - "32768"
+      - -dev
+      - CUDA0
+      - -ngl
+      - all
+      - -fa
+      - auto
+      - -ctk
+      - q8_0
+      - -ctv
+      - q8_0
+      - -ub
+      - "1024"
+      - -b
+      - "1024"
+      - -np
+      - "1"
+      - --reasoning
+      - on
+      - --reasoning-format
+      - deepseek
+      - --jinja
+      - --chat-template-file
+      - /opt/plugins/tool_chat_template_qwen3coder.jinja
+      - --host
       - 0.0.0.0
       - --port
       - "8001"
-      - --dtype
-      - float32
-      - --huggingface-hub-cache
-      - /data
-      - --max-batch-tokens
-      - "2048"
-      - --served-model-name
-      - Qwen/Qwen3-Embedding-4B
-      - --json-output
-
-  bge-rerank-tei:
-    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.9
-    container_name: bge-rerank-tei
-    restart: unless-stopped
-    init: true
-    network_mode: host
-    volumes:
-      - /root/.cache/huggingface/hub:/data
-    ulimits:
-      nofile:
-        soft: 1048576
-        hard: 1048576
-    stop_grace_period: 2m
-    logging:
-      driver: json-file
-      options:
-        max-size: "50m"
-        max-file: "3"
-    healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8002/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 10
-      start_period: 15m
-    command:
-      - --model-id
-      - BAAI/bge-reranker-v2-m3
-      - --hostname
-      - 0.0.0.0
-      - --port
-      - "8002"
-      - --dtype
-      - float32
-      - --huggingface-hub-cache
-      - /data
-      - --max-batch-tokens
-      - "1024"
-      - --served-model-name
-      - BAAI/bge-reranker-v2-m3
-      - --json-output
