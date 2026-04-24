@@ -1,23 +1,19 @@
 name: deezx
 
 services:
-  qwen36-research-vllm:
-    image: vllm/vllm-openai:latest
-    container_name: qwen36-research-vllm
+  qwen36-research-llama:
+    image: ghcr.io/ggml-org/llama.cpp:server-cuda
+    container_name: qwen36-research-llama
     restart: unless-stopped
     init: true
     gpus: all
     network_mode: host
-    ipc: host
-    shm_size: "16gb"
     volumes:
       - /root/.cache/huggingface:/root/.cache/huggingface
-      - ./qwen3_coder_named_safe.py:/opt/plugins/qwen3_coder_named_safe.py:ro
       - ./tool_chat_template_qwen3coder.jinja:/opt/plugins/tool_chat_template_qwen3coder.jinja:ro
     environment:
-      CUDA_VISIBLE_DEVICES: "0"
+      CUDA_VISIBLE_DEVICES: "0,1"
       HF_HOME: /root/.cache/huggingface
-      VLLM_NO_USAGE_STATS: "1"
     ulimits:
       nofile:
         soft: 1048576
@@ -33,50 +29,57 @@ services:
       interval: 30s
       timeout: 10s
       retries: 10
-      start_period: 8m
+      start_period: 30m
     command:
-      - cyankiwi/Qwen3.6-35B-A3B-AWQ-4bit
+      - -hf
+      - bartowski/Qwen_Qwen3.6-35B-A3B-GGUF:Q8_0
+      - -hff
+      - Qwen_Qwen3.6-35B-A3B-Q8_0.gguf
+      - --no-mmproj
+      - -a
+      - Qwen/Qwen3.6-35B-A3B
+      - -c
+      - "32768"
+      - -dev
+      - CUDA0,CUDA1
+      - -sm
+      - layer
+      - -ngl
+      - all
+      - -fa
+      - auto
+      - -ctk
+      - q8_0
+      - -ctv
+      - q8_0
+      - -ub
+      - "512"
+      - -b
+      - "1024"
+      - -np
+      - "1"
+      - --reasoning
+      - on
+      - --reasoning-format
+      - deepseek
+      - --reasoning-budget
+      - "0"
+      - --jinja
+      - --chat-template-file
+      - /opt/plugins/tool_chat_template_qwen3coder.jinja
       - --host
       - 0.0.0.0
       - --port
       - "8000"
-      - --tensor-parallel-size
-      - "1"
-      - --gpu-memory-utilization
-      - "0.98"
-      - --max-model-len
-      - "4096"
-      - --max-num-seqs
-      - "1"
-      - --max-num-batched-tokens
-      - "2048"
-      - --enable-chunked-prefill
-      - --reasoning-parser
-      - qwen3
-      - --enable-auto-tool-choice
-      - --tool-parser-plugin
-      - /opt/plugins/qwen3_coder_named_safe.py
-      - --tool-call-parser
-      - qwen3_coder_named_safe
-      - --chat-template
-      - /opt/plugins/tool_chat_template_qwen3coder.jinja
-      - --language-model-only
-      - --dtype
-      - float16
-      - --served-model-name
-      - Qwen/Qwen3.6-35B-A3B
 
   qwen3-embed-tei:
-    image: ghcr.io/huggingface/text-embeddings-inference:cuda-1.9
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.9
     container_name: qwen3-embed-tei
     restart: unless-stopped
     init: true
-    gpus: all
     network_mode: host
     volumes:
       - /root/.cache/huggingface/hub:/data
-    environment:
-      CUDA_VISIBLE_DEVICES: "1"
     ulimits:
       nofile:
         soft: 1048576
@@ -92,7 +95,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 10
-      start_period: 5m
+      start_period: 15m
     command:
       - --model-id
       - Qwen/Qwen3-Embedding-4B
@@ -101,26 +104,23 @@ services:
       - --port
       - "8001"
       - --dtype
-      - float16
+      - float32
       - --huggingface-hub-cache
       - /data
       - --max-batch-tokens
-      - "8192"
+      - "2048"
       - --served-model-name
       - Qwen/Qwen3-Embedding-4B
       - --json-output
 
   bge-rerank-tei:
-    image: ghcr.io/huggingface/text-embeddings-inference:cuda-1.9
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.9
     container_name: bge-rerank-tei
     restart: unless-stopped
     init: true
-    gpus: all
     network_mode: host
     volumes:
       - /root/.cache/huggingface/hub:/data
-    environment:
-      CUDA_VISIBLE_DEVICES: "1"
     ulimits:
       nofile:
         soft: 1048576
@@ -136,7 +136,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 10
-      start_period: 5m
+      start_period: 15m
     command:
       - --model-id
       - BAAI/bge-reranker-v2-m3
@@ -145,11 +145,11 @@ services:
       - --port
       - "8002"
       - --dtype
-      - float16
+      - float32
       - --huggingface-hub-cache
       - /data
       - --max-batch-tokens
-      - "4096"
+      - "1024"
       - --served-model-name
       - BAAI/bge-reranker-v2-m3
       - --json-output

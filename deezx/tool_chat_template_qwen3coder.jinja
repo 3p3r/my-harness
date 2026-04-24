@@ -22,10 +22,12 @@
 {%- endif %}
 
 {%- if system_message is defined %}
-    {{- "<|im_start|>system\n" + system_message }}
+    {{- "<|im_start|>system\n" + system_message + "\n\nDo not output <think> blocks or chain-of-thought. Keep reasoning private. Answer directly unless a tool call is required." }}
 {%- else %}
     {%- if tools is iterable and tools | length > 0 %}
-        {{- "<|im_start|>system\nYou are Qwen, a helpful AI assistant that can interact with a computer to solve tasks." }}
+        {{- "<|im_start|>system\nYou are Qwen, a helpful AI assistant that can interact with a computer to solve tasks. Do not output <think> blocks or chain-of-thought. Keep reasoning private. Answer directly unless a tool call is required." }}
+    {%- else %}
+        {{- "<|im_start|>system\nYou are Qwen, a helpful AI assistant. Do not output <think> blocks or chain-of-thought. Keep reasoning private and answer directly." }}
     {%- endif %}
 {%- endif %}
 {%- if tools is iterable and tools | length > 0 %}
