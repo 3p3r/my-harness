@@ -67,7 +67,13 @@ flowchart LR
 3. Restore model and cache paths: `deez1` needs the Qwen GGUF in `/root/models/qwen-gguf-strix` before startup, while `deez2` and `deezx` need writable Hugging Face cache directories under `/root/.cache/huggingface`.
 4. Start backend nodes first: bring up `deez1`, then `deez2`, then `deezx`; `deez2` is intentionally the slowest first boot because it may need to populate the Gemma 4 snapshot and mmproj cache and then warm the multimodal model.
 5. Start `deezr` last: the router should come up only after the backend health checks are already green.
-6. Validate the fleet: run [tools/fleet_smoke.sh](tools/fleet_smoke.sh) from the repo root; a healthy rebuild should end with `FLEET_SMOKE_OK`.
+6. Validate the fleet: use [tools/fleet_smoke.sh](tools/fleet_smoke.sh) for the transport-level smoke and [tools/langchain_fleet_smoke.sh](tools/langchain_fleet_smoke.sh) for the SDK-level agent smoke; a healthy rebuild ends with both `FLEET_SMOKE_OK` and `LANGCHAIN_FLEET_SMOKE_OK`.
+
+## Validation Coverage
+
+- [tools/fleet_smoke.sh](tools/fleet_smoke.sh) checks raw backend and routed availability, tool calls, multimodal requests, embeddings, rerank, long-window requests, and parallel burst behavior.
+- [tools/langchain_fleet_smoke.sh](tools/langchain_fleet_smoke.sh) exercises the same topology through LangChain on Python 3.11, including real agent execution, bound tool calls, multimodal requests, long-window requests, embeddings, rerank, and routed concurrency.
+- [tools/langchain_fleet_smoke.py](tools/langchain_fleet_smoke.py) treats embeddings as healthy when identical inputs are deterministic and direct-versus-routed outputs agree for the same request shape; TEI document embeddings can shift slightly between single-item and multi-item batches.
 
 ## Reliability Defaults
 
@@ -84,4 +90,5 @@ flowchart LR
 - `deez1` is the only node that does not self-fetch its main model; it expects the Qwen GGUF file to already exist at the mounted local path.
 - `deez2` uses the exposed alias `TrevorJS/gemma-4-26B-A4B-it-uncensored`, but the actual files are pulled from the `AgentAnon` uncensored GGUF repo because that repo includes the matching Q8 weight and mmproj assets.
 - `deezx` research chat now runs on llama.cpp CUDA because the prior vLLM path would not hold `32768`+ on this hardware without changing quantization; the validated live target is the Bartowski `Q8_0` GGUF at `32768` context, split across both 3090s.
+- `deezx` embedding validation should compare like-for-like request shapes; `Qwen/Qwen3-Embedding-4B` is deterministic for identical inputs, but TEI document vectors can differ slightly between single-item and multi-item batches.
 - `deezr` is the client-facing entrypoint; direct backend ports are still useful for debugging, but normal use should go through `:4000`.
