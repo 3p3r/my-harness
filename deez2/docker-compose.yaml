@@ -59,6 +59,8 @@ services:
       - on
       - --reasoning-format
       - deepseek
+      - --sleep-idle-seconds
+      - "3600"
       - --jinja
       - --host
       - 0.0.0.0

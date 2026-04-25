@@ -74,6 +74,7 @@ flowchart LR
 - Every service uses Docker Compose with `restart: unless-stopped`.
 - Every service enables `init: true` and log rotation to reduce long-run process and disk churn.
 - Health checks use the real service ports; this already fixed the old false-unhealthy problem on `deez1`.
+- The llama.cpp backends now set `--sleep-idle-seconds 3600` explicitly, so an image-default change cannot silently introduce model unloading on idle.
 - `deez2` uses `q8_0` KV cache tensors and a single slot, which is what makes native `262144` context practical on this hardware.
 - `deez2` multimodal startup intentionally has a long health-check grace period because Gemma 4 warmup is expensive.
 - `deezx` runs two independent `Qwen3-14B` `Q8_0` research servers, one per 3090, each tuned for `32768` context and low-latency tool use.

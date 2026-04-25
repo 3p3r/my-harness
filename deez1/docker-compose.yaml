@@ -50,6 +50,8 @@ services:
       - on
       - --reasoning-format
       - deepseek
+      - --sleep-idle-seconds
+      - "3600"
       - --jinja
       - --chat-template-file
       - /opt/plugins/tool_chat_template_qwen3coder.jinja
