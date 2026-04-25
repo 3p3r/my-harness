@@ -141,6 +141,11 @@ class LangChainFleetSmoke:
             timeout=300,
             extra_body={"chat_template_kwargs": {"enable_thinking": False}},
         )
+        self.thinking_deep_routed = self.make_chat(
+            "thinking-deep",
+            DEEZR_BASE,
+            timeout=300,
+        )
 
         self.research_direct = self.make_chat(RESEARCH_MODEL, DEEZX_BASE, timeout=180)
         self.research_direct_b = self.make_chat(RESEARCH_MODEL, DEEZX_FAST_B_BASE, timeout=180)
@@ -203,6 +208,7 @@ class LangChainFleetSmoke:
             ("thinking-direct-bound-tool", self.test_thinking_direct_bound_tool),
             ("thinking-direct-multimodal", self.test_thinking_direct_multimodal),
             ("thinking-routed-bound-tool", self.test_thinking_routed_bound_tool),
+            ("thinking-deep-routed-reasoning", self.test_thinking_deep_routed_reasoning),
             ("thinking-routed-multimodal", self.test_thinking_routed_multimodal),
             ("thinking-direct-long-window", self.test_thinking_direct_long_window),
             ("research-direct-agent-tool", self.test_research_direct_agent_tool),
@@ -250,7 +256,7 @@ class LangChainFleetSmoke:
         models = self.get_json(f"{DEEZR_BASE}/models")
         model_ids = {entry["id"] for entry in models["data"]}
         self.require(
-            {"thinking", "coding", "research"}.issubset(model_ids),
+            {"thinking", "thinking-deep", "coding", "research"}.issubset(model_ids),
             f"router model inventory changed: {sorted(model_ids)!r}",
         )
 
@@ -346,6 +352,28 @@ class LangChainFleetSmoke:
 
     def test_thinking_routed_bound_tool(self) -> None:
         self.run_bound_tool_smoke(self.thinking_routed, min_prompt_tokens=70)
+
+    def test_thinking_deep_routed_reasoning(self) -> None:
+        response = self.http.post(
+            f"{DEEZR_BASE}/chat/completions",
+            json={
+                "model": "thinking-deep",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": "Which is greater, 9.11 or 9.8? Answer briefly.",
+                    }
+                ],
+                "temperature": 0,
+                "max_tokens": 256,
+            },
+        )
+        response.raise_for_status()
+        message = response.json()["choices"][0]["message"]
+        self.require(
+            message.get("reasoning_content") is not None,
+            f"expected reasoning content from thinking-deep, got {message!r}",
+        )
 
     def test_thinking_routed_multimodal(self) -> None:
         message = self.thinking_routed.invoke(

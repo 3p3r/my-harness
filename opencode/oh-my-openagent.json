@@ -6,7 +6,7 @@
   "default_run_agent": "sisyphus",
   "agents": {
     "sisyphus": {
-      "model": "litellm/thinking",
+      "model": "litellm/thinking-deep",
       "permission": {
         "bash": {
           "git": "deny"
@@ -110,7 +110,7 @@
       "model": "litellm/coding"
     },
     "deep": {
-      "model": "litellm/thinking"
+      "model": "litellm/thinking-deep"
     },
     "artistry": {
       "model": "litellm/research"
@@ -122,7 +122,7 @@
       "model": "litellm/coding"
     },
     "unspecified-high": {
-      "model": "litellm/thinking"
+      "model": "litellm/thinking-deep"
     },
     "writing": {
       "model": "litellm/research"

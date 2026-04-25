@@ -33,7 +33,29 @@
       "models": {
         "thinking": {
           "id": "thinking",
-          "name": "Thinking (Gemma 4 Q8)",
+          "name": "Thinking (Gemma 4 Q8, default no-think)",
+          "family": "gemma",
+          "attachment": true,
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "limit": {
+            "context": 262144,
+            "output": 16384
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          }
+        },
+        "thinking-deep": {
+          "id": "thinking-deep",
+          "name": "Thinking Deep (Gemma 4 Q8)",
           "family": "gemma",
           "attachment": true,
           "reasoning": true,

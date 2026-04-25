@@ -1,94 +1,75 @@
-# Local Inference Fabric
+# Local Inference Fleet
 
-This repo is the rebuild source of truth for the four-host local inference lab. The currently validated layout is one shared-weight Qwen 3.6 coding monolith on `deez1`, two Gemma multimodal containers on `deez2` with two slots each, two Qwen3-14B research lanes on `deezx`, and a LiteLLM router on `deezr`.
+This repo holds the compose files, router config, templates, and smoke tests for the local four-host inference fleet.
 
-## Deployment Layout
+## Fleet Overview
 
-| Host | IP | Remote deploy dir | Source in this repo | Required local state |
-| --- | --- | --- | --- | --- |
-| `deez1` | `192.168.1.95` | `/opt/deez1` | [deez1/docker-compose.yaml](deez1/docker-compose.yaml), [deez1/tool_chat_template_qwen3coder.jinja](deez1/tool_chat_template_qwen3coder.jinja) | `/root/models/qwen-gguf-strix/Qwen3.6-35B-A3B-Q8_0.gguf` must already exist |
-| `deez2` | `192.168.1.114` | `/opt/deez2` | [deez2/docker-compose.yaml](deez2/docker-compose.yaml) | `/root/.cache/huggingface` must be writable so the Gemma GGUF and mmproj cache can be reused |
-| `deezx` | `192.168.1.161` | `/opt/deezx` | [deezx/docker-compose.yaml](deezx/docker-compose.yaml), [deezx/tool_chat_template_qwen3coder.jinja](deezx/tool_chat_template_qwen3coder.jinja) | `/root/models/qwen3-14b-gguf/Qwen_Qwen3-14B-Q8_0.gguf` must already exist |
-| `deezr` | `192.168.1.85` | `/opt/deezr` | [deezr/docker-compose.yaml](deezr/docker-compose.yaml), [deezr/config.yaml](deezr/config.yaml) | `config.yaml` must stay beside the compose file |
+| Host | Role | Direct API | Model | Capacity | Best use |
+| --- | --- | --- | --- | --- | --- |
+| `deez1` | Coding | `http://192.168.1.95:8010/v1` | `Qwen/Qwen3.6-35B-A3B` | 4 shared slots, `262144` context pool | Coding, tool use, long-context code work |
+| `deez2` | Thinking | `http://192.168.1.114:8000/v1`, `http://192.168.1.114:8001/v1` | `TrevorJS/gemma-4-26B-A4B-it-uncensored` | 4 total slots across two endpoints, `262144` context per endpoint | Multimodal prompts and long-context reasoning |
+| `deezx` | Research | `http://192.168.1.161:8000/v1`, `http://192.168.1.161:8001/v1` | `Qwen/Qwen3-14B` | 2 lanes, `32768` context per lane | Fast short-window research and tool use |
+| `deezr` | Router | `http://192.168.1.85:4000/v1` | LiteLLM aliases | Routes to the backend nodes | Main user-facing entry point on the LAN |
 
-## Current Topology
-
-| Host | Purpose | Runtime stack | Live model or alias | Ports | Context | Notes |
-| --- | --- | --- | --- | --- | --- | --- |
-| `deez1` | Coding | `llama.cpp` Vulkan | `Qwen/Qwen3.6-35B-A3B` | `8010` | `262144` total model context | Single monolith with `--parallel 4 --kv-unified`; raw `/slots` reports four slots and each reports `n_ctx = 262144` |
-| `deez2` | Multimodal thinking | `llama.cpp` Vulkan | `TrevorJS/gemma-4-26B-A4B-it-uncensored` | `8000`, `8001` | `262144` per container | Two Gemma containers, each started with `--parallel 2 --kv-unified`; total of four live Gemma slots across the host |
-| `deezx` | Research | `llama.cpp` CUDA | `Qwen/Qwen3-14B` | `8000`, `8001` | `32768` per container | One Qwen3-14B Q8 server per GPU for fast tool-calling and short-window research work |
-| `deezr` | Router | LiteLLM | `thinking`, `coding`, `research` plus aliases | `4000` | Not applicable | `drop_params: true`, `request_timeout: 300`, `num_retries: 2`, admin UI disabled |
+`deezr` is LAN-only and does not require a master key in the current setup.
 
 ## Router Aliases
 
-`deezr` is intentionally LAN-only and does not require a master key.
+| Alias | Backing node | Use it for |
+| --- | --- | --- |
+| `thinking` | `deez2` | Multimodal and long-context work with no-think default |
+| `thinking-deep` | `deez2` | Explicit reasoning-enabled Gemma lane |
+| `opus` | `deez2` | Compatibility alias for `thinking-deep` |
+| `coding` | `deez1` | Coding, tool use, and long-context code tasks |
+| `coder` | `deez1` | Compatibility alias for `coding` |
+| `research` | `deezx` | Fast short-window research and tool use |
+| `haiku` | `deezx` | Compatibility alias for `research` |
 
-| User-facing alias | Routed to | Effective model id | Purpose |
+## Repo Layout
+
+| Host | Remote deploy dir | Source in this repo | Required host state |
 | --- | --- | --- | --- |
-| `thinking` | `deez2:8000`, `deez2:8001` | `TrevorJS/gemma-4-26B-A4B-it-uncensored` | Load-balanced multimodal thinking path |
-| `opus` | `thinking` | `TrevorJS/gemma-4-26B-A4B-it-uncensored` | Compatibility alias |
-| `coding` | `deez1:8010` | `Qwen/Qwen3.6-35B-A3B` | Single-backend coding path backed by the monolith |
-| `coder` | `coding` | `Qwen/Qwen3.6-35B-A3B` | Compatibility alias |
-| `research` | `deezx:8000`, `deezx:8001` | `Qwen/Qwen3-14B` | Load-balanced research path |
-| `haiku` | `research` | `Qwen/Qwen3-14B` | Compatibility alias |
+| `deez1` | `/opt/deez1` | [deez1/docker-compose.yaml](deez1/docker-compose.yaml), [deez1/tool_chat_template_qwen3coder.jinja](deez1/tool_chat_template_qwen3coder.jinja) | `/root/models/qwen-gguf-strix/Qwen3.6-35B-A3B-Q8_0.gguf` |
+| `deez2` | `/opt/deez2` | [deez2/docker-compose.yaml](deez2/docker-compose.yaml) | Writable Hugging Face cache at `/root/.cache/huggingface` |
+| `deezx` | `/opt/deezx` | [deezx/docker-compose.yaml](deezx/docker-compose.yaml), [deezx/tool_chat_template_qwen3coder.jinja](deezx/tool_chat_template_qwen3coder.jinja) | `/root/models/qwen3-14b-gguf/Qwen_Qwen3-14B-Q8_0.gguf` |
+| `deezr` | `/opt/deezr` | [deezr/docker-compose.yaml](deezr/docker-compose.yaml), [deezr/config.yaml](deezr/config.yaml) | `config.yaml` stored beside the compose file |
 
-## Network Map
+## Current TPS Snapshot
 
-```mermaid
-flowchart LR
-    Client[Local LAN clients] --> Router[deezr\n192.168.1.85:4000\nLiteLLM ingress]
-    Router --> Coding[deez1\n192.168.1.95:8010\nQwen3.6-35B-A3B monolith]
-    Router --> ThinkingA[deez2\n192.168.1.114:8000\nGemma 4 Q8 multimodal A]
-    Router --> ThinkingB[deez2\n192.168.1.114:8001\nGemma 4 Q8 multimodal B]
-    Router --> ResearchA[deezx\n192.168.1.161:8000\nQwen3-14B research A]
-    Router --> ResearchB[deezx\n192.168.1.161:8001\nQwen3-14B research B]
-```
+Measured on `2026-04-25` with direct backend `/v1/chat/completions` requests using `temperature=0`, `cache_prompt=false`, `max_tokens=96`, `warmups=1`, `slot_runs=3`, and `node_runs=3`.
 
-## Live Validation
+These are direct node measurements. `deezr` is not listed because it routes requests but does not generate tokens itself.
 
-The current layout was validated live with both transport-level and SDK-level smoke suites after redeploy.
+### Node Throughput
 
-- [tools/fleet_smoke.sh](tools/fleet_smoke.sh) passed with `FLEET_SMOKE_OK`.
-- [tools/langchain_fleet_smoke.py](tools/langchain_fleet_smoke.py) passed with `LANGCHAIN_FLEET_SMOKE_OK` under Python 3.11.
-- Direct deez1 chat and tool calls succeeded.
-- Direct and routed parallel bursts succeeded.
-- Direct and routed multimodal Gemma checks succeeded.
-- Direct deez2 long-window check succeeded.
+| Node | Slots | Avg decode tok/s | Avg wall tok/s |
+| --- | --- | --- | --- |
+| `deez1` | `4` | `126.27` | `102.30` |
+| `deez2` | `4` | `84.88` | `69.84` |
+| `deezx` | `2` | `102.74` | `99.25` |
 
-## Rebuild Order
+### Slot Throughput
 
-1. Prepare host prerequisites: `deez1` and `deez2` need Docker Compose plus working Vulkan access to `/dev/dri`; `deezx` needs Docker Compose plus the NVIDIA container runtime; `deezr` only needs Docker Compose.
-2. Restore the deployment directories under `/opt` from the matching repo subdirectories.
-3. Restore model and cache paths before startup: `deez1` needs the Qwen3.6 GGUF in `/root/models/qwen-gguf-strix`, `deezx` needs the Qwen3-14B GGUF in `/root/models/qwen3-14b-gguf`, and `deez2` needs a reusable Hugging Face cache under `/root/.cache/huggingface`.
-4. Start backend nodes first: `deez1`, `deez2`, then `deezx`.
-5. Start `deezr` last, and use `docker compose up -d --force-recreate litellm-proxy` after any router config change so LiteLLM actually reloads the model map.
-6. Validate the fleet with the commands below.
+| Node | Endpoint | Slot | Avg tok/s |
+| --- | --- | --- | --- |
+| `deez1` | `192.168.1.95:8010` | `0` | `52.64` |
+| `deez1` | `192.168.1.95:8010` | `1` | `52.60` |
+| `deez1` | `192.168.1.95:8010` | `2` | `52.64` |
+| `deez1` | `192.168.1.95:8010` | `3` | `52.61` |
+| `deez2` | `192.168.1.114:8000` | `0` | `45.67` |
+| `deez2` | `192.168.1.114:8000` | `1` | `45.73` |
+| `deez2` | `192.168.1.114:8001` | `0` | `45.63` |
+| `deez2` | `192.168.1.114:8001` | `1` | `45.71` |
+| `deezx` | `192.168.1.161:8000` | `0` | `51.67` |
+| `deezx` | `192.168.1.161:8001` | `0` | `51.05` |
 
-## Validation Commands
+The current snapshot shows `deezx` holding its isolated slot speed most cleanly under load, `deez1` offering the highest total coding throughput, and `deez2` providing the slowest tokens-per-second under full contention.
 
-```bash
-bash tools/fleet_smoke.sh
-.venv-langchain-smoke311/bin/python tools/langchain_fleet_smoke.py
-```
+## Deploy Or Refresh
 
-Healthy output ends with both `FLEET_SMOKE_OK` and `LANGCHAIN_FLEET_SMOKE_OK`.
-
-## Reliability Notes
-
-- All llama.cpp backends set `--sleep-idle-seconds 3600` to avoid short idle unloads.
-- `deez1` keeps one Qwen3.6 Q8 monolith resident and exposes concurrency through slots instead of trying to fit multiple separate 35B processes.
-- `deez2` keeps two separate Gemma Q8 containers resident and exposes concurrency through `--parallel 2` on each container.
-- Live `rocm-smi` on `deez2` showed about `91%` VRAM allocated after the two-slot-per-container rollout, so the Gemma host has little spare headroom left.
-- Direct Qwen requests are most stable when callers pass `chat_template_kwargs.enable_thinking = false` unless reasoning output is explicitly needed.
-- For direct Qwen tool-call forcing, string `tool_choice: "required"` avoids the warning emitted by this llama.cpp build for object-style `tool_choice` payloads.
-- LiteLLM still serves the SPA shell at `/ui`, but `/.well-known/litellm-ui-config` reports `admin_ui_disabled: true`.
-
-## Rebuild Gotchas
-
-- `deez1` no longer runs the old dual `Qwen2.5-Coder-14B-Instruct` layout. The validated coding topology is one `Qwen/Qwen3.6-35B-A3B` monolith on port `8010`.
-- Two separate `Qwen3.6-35B-A3B` Q8 processes do not fit cleanly on the deez1 hardware envelope. Shared-weight slot concurrency is the working solution.
-- The `tool_chat_template_qwen3coder.jinja` filename on `deez1` is historical. The active content is the custom Qwen3.6 template that merges consecutive leading system messages so OpenCode and similar clients do not trip the upstream single-system restriction.
-- `deez2` exposes the alias `TrevorJS/gemma-4-26B-A4B-it-uncensored`, but the actual GGUF and mmproj assets are pulled from `AgentAnon/gemma-4-26B-A4B-it-uncensored-GGUF`.
-- `deezx` is still the fast short-window research node. Long prompts that need more than `32768` context should route to `thinking`, not `research` or `haiku`.
-- The llama.cpp `/slots` endpoint currently reports full `n_ctx` values on the slot objects even when `--parallel` is greater than one, so do not treat `/slots` alone as the final word on effective concurrency behavior. Use the smoke suites.
+1. Copy the matching repo subdirectory to `/opt/deez1`, `/opt/deez2`, `/opt/deezx`, or `/opt/deezr`.
+2. Confirm the model or cache path for that host exists.
+3. Start the backend nodes first: `deez1`, `deez2`, then `deezx`.
+4. Start `deezr` last.
+5. After changing [deezr/config.yaml](deezr/config.yaml), reload the router with `docker compose up -d --force-recreate litellm-proxy`.
+6. Re-run the smoke tests and the benchmark.

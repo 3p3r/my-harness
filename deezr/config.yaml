@@ -5,10 +5,28 @@ model_list:
       api_base: http://192.168.1.114:8000/v1
       api_key: "none"
       chat_template_kwargs:
-        enable_thinking: true
+        enable_thinking: false
       reasoning_format: auto
 
   - model_name: thinking
+    litellm_params:
+      model: openai/TrevorJS/gemma-4-26B-A4B-it-uncensored
+      api_base: http://192.168.1.114:8001/v1
+      api_key: "none"
+      chat_template_kwargs:
+        enable_thinking: false
+      reasoning_format: auto
+
+  - model_name: thinking-deep
+    litellm_params:
+      model: openai/TrevorJS/gemma-4-26B-A4B-it-uncensored
+      api_base: http://192.168.1.114:8000/v1
+      api_key: "none"
+      chat_template_kwargs:
+        enable_thinking: true
+      reasoning_format: auto
+
+  - model_name: thinking-deep
     litellm_params:
       model: openai/TrevorJS/gemma-4-26B-A4B-it-uncensored
       api_base: http://192.168.1.114:8001/v1
@@ -46,7 +64,7 @@ model_list:
 
 router_settings:
   model_group_alias:
-    opus: thinking
+    opus: thinking-deep
     coder: coding
     haiku: research
 
