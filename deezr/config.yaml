@@ -6,11 +6,20 @@ model_list:
       api_key: "none"
       chat_template_kwargs:
         enable_thinking: true
-      reasoning_format: deepseek
+      reasoning_format: auto
+
+  - model_name: thinking
+    litellm_params:
+      model: openai/TrevorJS/gemma-4-26B-A4B-it-uncensored
+      api_base: http://192.168.1.114:8001/v1
+      api_key: "none"
+      chat_template_kwargs:
+        enable_thinking: true
+      reasoning_format: auto
 
   - model_name: coding
     litellm_params:
-      model: openai/Qwen3.6-35B-A3B-Q8_0.gguf
+      model: openai/Qwen/Qwen3.6-35B-A3B
       api_base: http://192.168.1.95:8010/v1
       api_key: "none"
       chat_template_kwargs:
@@ -43,5 +52,5 @@ router_settings:
 
 litellm_settings:
   drop_params: true
-  request_timeout: 180
+  request_timeout: 300
   num_retries: 2

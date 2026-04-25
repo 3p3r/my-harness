@@ -1,9 +1,9 @@
 name: deez2
 
 services:
-  gemma4-llama:
+  gemma4-llama-a:
     image: ghcr.io/ggml-org/llama.cpp:server-vulkan
-    container_name: gemma4-llama
+    container_name: gemma4-llama-a
     restart: unless-stopped
     init: true
     network_mode: host
@@ -50,15 +50,18 @@ services:
       - -ctv
       - q8_0
       - -ub
-      - "512"
+      - "256"
       - -b
-      - "1024"
+      - "512"
       - --parallel
-      - "1"
+      - "2"
+      - --kv-unified
+      - --cache-ram
+      - "0"
       - --reasoning
       - on
       - --reasoning-format
-      - deepseek
+      - auto
       - --sleep-idle-seconds
       - "3600"
       - --jinja
@@ -66,3 +69,72 @@ services:
       - 0.0.0.0
       - --port
       - "8000"
+
+  gemma4-llama-b:
+    image: ghcr.io/ggml-org/llama.cpp:server-vulkan
+    container_name: gemma4-llama-b
+    restart: unless-stopped
+    init: true
+    network_mode: host
+    ipc: host
+    group_add:
+      - video
+    devices:
+      - /dev/dri:/dev/dri
+    volumes:
+      - /root/.cache/huggingface:/root/.cache/huggingface
+    environment:
+      HF_HOME: /root/.cache/huggingface
+    ulimits:
+      nofile:
+        soft: 1048576
+        hard: 1048576
+    stop_grace_period: 5m
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 30m
+    command:
+      - -hf
+      - AgentAnon/gemma-4-26B-A4B-it-uncensored-GGUF
+      - -hff
+      - gemma-4-26B-A4B-it-uncensored-Q8_0.gguf
+      - -a
+      - TrevorJS/gemma-4-26B-A4B-it-uncensored
+      - -c
+      - "262144"
+      - -ngl
+      - "999"
+      - -fa
+      - auto
+      - -ctk
+      - q8_0
+      - -ctv
+      - q8_0
+      - -ub
+      - "256"
+      - -b
+      - "512"
+      - --parallel
+      - "2"
+      - --kv-unified
+      - --cache-ram
+      - "0"
+      - --reasoning
+      - on
+      - --reasoning-format
+      - auto
+      - --sleep-idle-seconds
+      - "3600"
+      - --jinja
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8001"

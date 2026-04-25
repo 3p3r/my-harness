@@ -1,0 +1,139 @@
+{
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
+  "disabled_skills": [
+    "git-master"
+  ],
+  "default_run_agent": "sisyphus",
+  "agents": {
+    "sisyphus": {
+      "model": "litellm/thinking",
+      "permission": {
+        "bash": {
+          "git": "deny"
+        }
+      }
+    },
+    "hephaestus": {
+      "model": "litellm/coding",
+      "allow_non_gpt_model": true,
+      "permission": {
+        "bash": {
+          "git": "deny"
+        }
+      }
+    },
+    "oracle": {
+      "model": "litellm/coding",
+      "permission": {
+        "bash": {
+          "git": "deny"
+        }
+      }
+    },
+    "librarian": {
+      "model": "litellm/research",
+      "permission": {
+        "bash": {
+          "git": "deny"
+        }
+      }
+    },
+    "explore": {
+      "model": "litellm/research",
+      "permission": {
+        "bash": {
+          "git": "deny"
+        }
+      }
+    },
+    "multimodal-looker": {
+      "model": "litellm/thinking",
+      "permission": {
+        "bash": {
+          "git": "deny"
+        }
+      }
+    },
+    "prometheus": {
+      "model": "litellm/coding",
+      "permission": {
+        "bash": {
+          "git": "deny"
+        }
+      }
+    },
+    "metis": {
+      "model": "litellm/coding",
+      "permission": {
+        "bash": {
+          "git": "deny"
+        }
+      }
+    },
+    "momus": {
+      "model": "litellm/research",
+      "permission": {
+        "bash": {
+          "git": "deny"
+        }
+      }
+    },
+    "atlas": {
+      "model": "litellm/coding",
+      "permission": {
+        "bash": {
+          "git": "deny"
+        }
+      }
+    },
+    "sisyphus-junior": {
+      "model": "litellm/coding",
+      "permission": {
+        "bash": {
+          "git": "deny"
+        }
+      }
+    },
+    "OpenCode-Builder": {
+      "permission": {
+        "bash": {
+          "git": "deny"
+        }
+      }
+    }
+  },
+  "categories": {
+    "visual-engineering": {
+      "model": "litellm/thinking"
+    },
+    "ultrabrain": {
+      "model": "litellm/coding"
+    },
+    "deep": {
+      "model": "litellm/thinking"
+    },
+    "artistry": {
+      "model": "litellm/research"
+    },
+    "quick": {
+      "model": "litellm/coding"
+    },
+    "unspecified-low": {
+      "model": "litellm/coding"
+    },
+    "unspecified-high": {
+      "model": "litellm/thinking"
+    },
+    "writing": {
+      "model": "litellm/research"
+    }
+  },
+  "start_work": {
+    "auto_commit": false
+  },
+  "git_master": {
+    "commit_footer": false,
+    "include_co_authored_by": false,
+    "git_env_prefix": "GIT_MASTER=1"
+  }
+}

@@ -24,11 +24,16 @@ from langchain_openai import ChatOpenAI
 API_KEY = "none"
 DEEZ1_BASE = "http://192.168.1.95:8010/v1"
 DEEZ2_BASE = "http://192.168.1.114:8000/v1"
+DEEZ2_B_BASE = "http://192.168.1.114:8001/v1"
 DEEZX_BASE = "http://192.168.1.161:8000/v1"
 DEEZX_FAST_B_BASE = "http://192.168.1.161:8001/v1"
 DEEZR_BASE = "http://192.168.1.85:4000/v1"
 
-CODING_MODEL = "Qwen3.6-35B-A3B-Q8_0.gguf"
+DEEZ1_ROOT = DEEZ1_BASE.removesuffix("/v1")
+DEEZ2_ROOT = DEEZ2_BASE.removesuffix("/v1")
+DEEZ2_B_ROOT = DEEZ2_B_BASE.removesuffix("/v1")
+
+CODING_MODEL = "Qwen/Qwen3.6-35B-A3B"
 THINKING_MODEL = "TrevorJS/gemma-4-26B-A4B-it-uncensored"
 RESEARCH_MODEL = "Qwen/Qwen3-14B"
 
@@ -101,8 +106,19 @@ class LangChainFleetSmoke:
         self.http = httpx.Client(timeout=httpx.Timeout(60.0, connect=10.0))
         self.red_square_b64 = base64.b64encode(make_png(8, 8, (255, 0, 0))).decode()
 
-        self.coding_direct = self.make_chat(CODING_MODEL, DEEZ1_BASE, timeout=120)
-        self.coding_routed = self.make_chat("coding", DEEZR_BASE, timeout=120)
+        self.coding_routed = self.make_chat(
+            "coding",
+            DEEZR_BASE,
+            timeout=120,
+            extra_body={"chat_template_kwargs": {"enable_thinking": False}},
+        )
+
+        self.coding_direct = self.make_chat(
+            CODING_MODEL,
+            DEEZ1_BASE,
+            timeout=120,
+            extra_body={"chat_template_kwargs": {"enable_thinking": False}},
+        )
 
         self.thinking_direct = self.make_chat(
             THINKING_MODEL,
@@ -238,6 +254,40 @@ class LangChainFleetSmoke:
             f"router model inventory changed: {sorted(model_ids)!r}",
         )
 
+        props = self.get_json(f"{DEEZ1_ROOT}/props")
+        n_ctx = props.get("default_generation_settings", {}).get("n_ctx", 0)
+        alias = props.get("model_alias")
+        self.require(n_ctx >= 262144, f"expected deez1 n_ctx >= 262144, got {n_ctx}")
+        self.require(alias == CODING_MODEL, f"unexpected deez1 alias {alias!r}")
+
+        slots = self.get_json(f"{DEEZ1_ROOT}/slots")
+        self.require(len(slots) == 4, f"expected 4 deez1 slots, got {len(slots)}")
+        self.require(
+            all(slot.get("n_ctx") == 262144 for slot in slots),
+            f"unexpected deez1 slot windows {slots!r}",
+        )
+
+        for url in [
+            f"{DEEZ2_ROOT}/props",
+            f"{DEEZ2_B_ROOT}/props",
+        ]:
+            props = self.get_json(url)
+            n_ctx = props.get("default_generation_settings", {}).get("n_ctx", 0)
+            alias = props.get("model_alias")
+            self.require(n_ctx >= 262144, f"expected deez2 n_ctx >= 262144, got {n_ctx}")
+            self.require(alias == THINKING_MODEL, f"unexpected deez2 alias {alias!r}")
+
+        for url in [
+            f"{DEEZ2_ROOT}/slots",
+            f"{DEEZ2_B_ROOT}/slots",
+        ]:
+            slots = self.get_json(url)
+            self.require(len(slots) == 2, f"expected 2 Gemma slots at {url}, got {len(slots)}")
+            self.require(
+                all(slot.get("n_ctx") == 262144 for slot in slots),
+                f"unexpected Gemma slot windows at {url}: {slots!r}",
+            )
+
         for url in [
             "http://192.168.1.161:8000/props",
             "http://192.168.1.161:8001/props",
@@ -251,6 +301,7 @@ class LangChainFleetSmoke:
         for url in [
             "http://192.168.1.95:8010/health",
             "http://192.168.1.114:8000/health",
+            "http://192.168.1.114:8001/health",
             "http://192.168.1.161:8000/health",
             "http://192.168.1.161:8001/health",
             "http://192.168.1.85:4000/health/liveliness",
@@ -415,6 +466,10 @@ class LangChainFleetSmoke:
             self.run_bound_tool_smoke(self.coding_routed, min_prompt_tokens=200)
             return "coding"
 
+        def thinking_call() -> str:
+            self.run_bound_tool_smoke(self.thinking_routed, min_prompt_tokens=70)
+            return "thinking"
+
         def research_call() -> str:
             self.run_bound_tool_smoke(
                 self.research_routed,
@@ -429,7 +484,7 @@ class LangChainFleetSmoke:
             )
             return "haiku"
 
-        tasks = [coding_call, research_call, haiku_call] * 3
+        tasks = [coding_call, thinking_call, research_call, haiku_call] * 3
         with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
             futures = [executor.submit(task) for task in tasks]
             completed = [future.result(timeout=240) for future in futures]
