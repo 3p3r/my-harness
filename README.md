@@ -36,7 +36,9 @@ This repo holds the compose files, router config, templates, and smoke tests for
 
 ## Current TPS Snapshot
 
-Measured on `2026-04-25` with direct backend `/v1/chat/completions` requests using `temperature=0`, `cache_prompt=false`, `max_tokens=96`, `warmups=1`, `slot_runs=3`, and `node_runs=3`.
+Measured on `2026-04-26` with direct backend `/v1/chat/completions` requests using `temperature=0`, `cache_prompt=false`, `max_tokens=96`, `warmups=1`, `slot_runs=3`, and `node_runs=3`.
+
+The current llama.cpp profile also enables `--spec-type ngram-map-k`, `--cache-reuse 256`, and `--no-mmap` on the Gemma and Qwen nodes. The standard benchmark keeps `cache_prompt=false`, so these tables mostly reflect decode-side changes and intentionally do not include prompt-cache wins.
 
 These are direct node measurements. `deezr` is not listed because it routes requests but does not generate tokens itself.
 
@@ -44,24 +46,26 @@ These are direct node measurements. `deezr` is not listed because it routes requ
 
 | Node | Slots | Avg decode tok/s | Avg wall tok/s |
 | --- | --- | --- | --- |
-| `deez1` | `4` | `126.80` | `105.17` |
-| `deez2` | `4` | `82.74` | `70.06` |
-| `deezx` | `2` | `77.65` | `69.48` |
+| `deez1` | `4` | `125.52` | `99.24` |
+| `deez2` | `4` | `82.57` | `70.18` |
+| `deezx` | `2` | `97.21` | `88.74` |
 
 ### Slot Throughput
 
 | Node | Endpoint | Slot | Avg tok/s |
 | --- | --- | --- | --- |
-| `deez1` | `192.168.1.95:8010` | `0` | `52.37` |
-| `deez1` | `192.168.1.95:8010` | `1` | `52.45` |
-| `deez1` | `192.168.1.95:8010` | `2` | `52.46` |
-| `deez1` | `192.168.1.95:8010` | `3` | `52.44` |
-| `deez2` | `192.168.1.114:8000` | `0` | `44.10` |
-| `deez2` | `192.168.1.114:8000` | `1` | `45.77` |
-| `deez2` | `192.168.1.114:8001` | `0` | `45.75` |
+| `deez1` | `192.168.1.95:8010` | `0` | `52.47` |
+| `deez1` | `192.168.1.95:8010` | `1` | `52.51` |
+| `deez1` | `192.168.1.95:8010` | `2` | `52.53` |
+| `deez1` | `192.168.1.95:8010` | `3` | `52.11` |
+| `deez2` | `192.168.1.114:8000` | `0` | `44.00` |
+| `deez2` | `192.168.1.114:8000` | `1` | `45.76` |
+| `deez2` | `192.168.1.114:8001` | `0` | `45.77` |
 | `deez2` | `192.168.1.114:8001` | `1` | `45.71` |
-| `deezx` | `192.168.1.161:8000` | `0` | `39.11` |
-| `deezx` | `192.168.1.161:8001` | `0` | `38.62` |
+| `deezx` | `192.168.1.161:8000` | `0` | `42.86` |
+| `deezx` | `192.168.1.161:8001` | `0` | `39.89` |
+
+A follow-up long-prefix probe with `cache_prompt=true` and a shared `20k`-token prefix showed the new cache-reuse path collapsing prompt time on the second request from about `35.8s -> 4.0s` on `deez1`, `22.6s -> 0.34s` on `deez2`, and `16.7s -> 1.0s` on `deezx` while keeping decode speed flat.
 
 The current snapshot shows `deez1` still delivering the highest total coding throughput, `deez2` holding steady on multimodal reasoning, and `deezx` trading raw speed for a native `131072`-token research window on each 3090 lane.
 

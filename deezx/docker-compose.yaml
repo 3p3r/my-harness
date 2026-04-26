@@ -43,6 +43,7 @@ services:
       - all
       - -fa
       - auto
+      - --no-mmap
       - -ctk
       - q8_0
       - -ctv
@@ -51,8 +52,13 @@ services:
       - "1024"
       - -b
       - "1024"
+      - --cache-prompt
+      - --cache-reuse
+      - "256"
       - --cache-ram
       - "0"
+      - --spec-type
+      - ngram-map-k
       - -np
       - "1"
       - --reasoning
@@ -111,6 +117,7 @@ services:
       - all
       - -fa
       - auto
+      - --no-mmap
       - -ctk
       - q8_0
       - -ctv
@@ -119,8 +126,13 @@ services:
       - "1024"
       - -b
       - "1024"
+      - --cache-prompt
+      - --cache-reuse
+      - "256"
       - --cache-ram
       - "0"
+      - --spec-type
+      - ngram-map-k
       - -np
       - "1"
       - --reasoning

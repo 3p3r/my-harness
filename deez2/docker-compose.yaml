@@ -45,6 +45,7 @@ services:
       - "999"
       - -fa
       - auto
+      - --no-mmap
       - -ctk
       - q8_0
       - -ctv
@@ -56,8 +57,13 @@ services:
       - --parallel
       - "2"
       - --kv-unified
+      - --cache-prompt
+      - --cache-reuse
+      - "256"
       - --cache-ram
       - "0"
+      - --spec-type
+      - ngram-map-k
       - --reasoning
       - on
       - --reasoning-format
@@ -114,6 +120,7 @@ services:
       - "999"
       - -fa
       - auto
+      - --no-mmap
       - -ctk
       - q8_0
       - -ctv
@@ -125,8 +132,13 @@ services:
       - --parallel
       - "2"
       - --kv-unified
+      - --cache-prompt
+      - --cache-reuse
+      - "256"
       - --cache-ram
       - "0"
+      - --spec-type
+      - ngram-map-k
       - --reasoning
       - on
       - --reasoning-format
