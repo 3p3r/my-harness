@@ -35,9 +35,11 @@ DEEZ2_B_ROOT = DEEZ2_B_BASE.removesuffix("/v1")
 
 CODING_MODEL = "Qwen/Qwen3.6-35B-A3B"
 THINKING_MODEL = "TrevorJS/gemma-4-26B-A4B-it-uncensored"
-RESEARCH_MODEL = "Qwen/Qwen3-14B"
+RESEARCH_MODEL = "Qwen/Qwen3.6-27B"
 
 RESEARCH_SHORT_TOOL_MIN_PROMPT_TOKENS = 150
+RESEARCH_LONG_TOOL_MIN_PROMPT_TOKENS = 100000
+RESEARCH_LONG_TOOL_FILLER_WORDS = 100500
 
 
 class SmokeFailure(RuntimeError):
@@ -147,10 +149,30 @@ class LangChainFleetSmoke:
             timeout=300,
         )
 
-        self.research_direct = self.make_chat(RESEARCH_MODEL, DEEZX_BASE, timeout=180)
-        self.research_direct_b = self.make_chat(RESEARCH_MODEL, DEEZX_FAST_B_BASE, timeout=180)
-        self.research_routed = self.make_chat("research", DEEZR_BASE, timeout=180)
-        self.haiku_routed = self.make_chat("haiku", DEEZR_BASE, timeout=180)
+        self.research_direct = self.make_chat(
+            RESEARCH_MODEL,
+            DEEZX_BASE,
+            timeout=300,
+            extra_body={"chat_template_kwargs": {"enable_thinking": False}},
+        )
+        self.research_direct_b = self.make_chat(
+            RESEARCH_MODEL,
+            DEEZX_FAST_B_BASE,
+            timeout=300,
+            extra_body={"chat_template_kwargs": {"enable_thinking": False}},
+        )
+        self.research_routed = self.make_chat(
+            "research",
+            DEEZR_BASE,
+            timeout=300,
+            extra_body={"chat_template_kwargs": {"enable_thinking": False}},
+        )
+        self.haiku_routed = self.make_chat(
+            "haiku",
+            DEEZR_BASE,
+            timeout=300,
+            extra_body={"chat_template_kwargs": {"enable_thinking": False}},
+        )
 
     @staticmethod
     def make_chat(
@@ -217,6 +239,8 @@ class LangChainFleetSmoke:
             ("haiku-routed-agent-tool", self.test_haiku_routed_agent_tool),
             ("research-direct-bound-tool", self.test_research_direct_bound_tool),
             ("research-b-direct-bound-tool", self.test_research_b_direct_bound_tool),
+            ("research-direct-long-tool", self.test_research_direct_long_tool),
+            ("research-b-direct-long-tool", self.test_research_b_direct_long_tool),
             ("research-routed-long-tool", self.test_research_routed_long_tool),
             ("haiku-routed-long-tool", self.test_haiku_routed_long_tool),
             ("router-parallel-burst", self.test_router_parallel_burst),
@@ -301,7 +325,7 @@ class LangChainFleetSmoke:
             props = self.get_json(url)
             n_ctx = props.get("default_generation_settings", {}).get("n_ctx", 0)
             alias = props.get("model_alias")
-            self.require(n_ctx >= 32768, f"expected deezx n_ctx >= 32768, got {n_ctx}")
+            self.require(n_ctx >= 131072, f"expected deezx n_ctx >= 131072, got {n_ctx}")
             self.require(alias == RESEARCH_MODEL, f"unexpected deezx alias {alias!r}")
 
         for url in [
@@ -428,24 +452,38 @@ class LangChainFleetSmoke:
         )
 
     def test_research_direct_bound_tool(self) -> None:
-        self.run_bound_tool_smoke(
-            self.research_direct,
-            min_prompt_tokens=RESEARCH_SHORT_TOOL_MIN_PROMPT_TOKENS,
-            expect_clean_content=False,
-        )
+        self.run_bound_tool_smoke(self.research_direct, min_prompt_tokens=RESEARCH_SHORT_TOOL_MIN_PROMPT_TOKENS)
 
     def test_research_b_direct_bound_tool(self) -> None:
+        self.run_bound_tool_smoke(self.research_direct_b, min_prompt_tokens=RESEARCH_SHORT_TOOL_MIN_PROMPT_TOKENS)
+
+    def test_research_direct_long_tool(self) -> None:
+        self.run_bound_tool_smoke(
+            self.research_direct,
+            min_prompt_tokens=RESEARCH_LONG_TOOL_MIN_PROMPT_TOKENS,
+            filler_words=RESEARCH_LONG_TOOL_FILLER_WORDS,
+        )
+
+    def test_research_b_direct_long_tool(self) -> None:
         self.run_bound_tool_smoke(
             self.research_direct_b,
-            min_prompt_tokens=RESEARCH_SHORT_TOOL_MIN_PROMPT_TOKENS,
-            expect_clean_content=False,
+            min_prompt_tokens=RESEARCH_LONG_TOOL_MIN_PROMPT_TOKENS,
+            filler_words=RESEARCH_LONG_TOOL_FILLER_WORDS,
         )
 
     def test_research_routed_long_tool(self) -> None:
-        self.run_bound_tool_smoke(self.research_routed, min_prompt_tokens=25000, filler_words=25500)
+        self.run_bound_tool_smoke(
+            self.research_routed,
+            min_prompt_tokens=RESEARCH_LONG_TOOL_MIN_PROMPT_TOKENS,
+            filler_words=RESEARCH_LONG_TOOL_FILLER_WORDS,
+        )
 
     def test_haiku_routed_long_tool(self) -> None:
-        self.run_bound_tool_smoke(self.haiku_routed, min_prompt_tokens=25000, filler_words=25500)
+        self.run_bound_tool_smoke(
+            self.haiku_routed,
+            min_prompt_tokens=RESEARCH_LONG_TOOL_MIN_PROMPT_TOKENS,
+            filler_words=RESEARCH_LONG_TOOL_FILLER_WORDS,
+        )
 
     def run_bound_tool_smoke(
         self,

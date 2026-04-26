@@ -97,13 +97,13 @@
         },
         "research": {
           "id": "research",
-          "name": "Research (Dual Qwen3 14B Q8)",
+          "name": "Research (Dual Qwen3.6 27B Q4)",
           "family": "qwen",
-          "reasoning": true,
+          "reasoning": false,
           "temperature": true,
           "tool_call": true,
           "limit": {
-            "context": 32768,
+            "context": 131072,
             "output": 8192
           },
           "modalities": {

@@ -173,7 +173,7 @@ try:
         {
           "role": "user",
           "content": (
-            ("alpha " * 25500)
+            ("alpha " * 100500)
             + "\n\nCall get_time with timezone UTC. Do not answer with plain text."
           ),
         }
@@ -195,7 +195,7 @@ try:
       "chat_template_kwargs": {"enable_thinking": False},
       "tool_choice": "required",
       "temperature": 0,
-      "max_tokens": 256,
+      "max_tokens": 128,
     }
   elif mode == "qwen-tool-over32k":
     payload = {
@@ -337,7 +337,7 @@ DEEZ2_TOOL=$(cat <<'JSON'
 JSON
 )
 DEEZX_TOOL=$(cat <<'JSON'
-{"model":"Qwen/Qwen3-14B","messages":[{"role":"user","content":"Call get_time with timezone UTC. Do not answer with plain text."}],"tools":[{"type":"function","function":{"name":"get_time","description":"Get time for a timezone.","parameters":{"type":"object","properties":{"timezone":{"type":"string"}},"required":["timezone"]}}}],"tool_choice":"required","temperature":0,"max_tokens":256}
+{"model":"Qwen/Qwen3.6-27B","messages":[{"role":"user","content":"Call get_time with timezone UTC. Do not answer with plain text."}],"chat_template_kwargs":{"enable_thinking":false},"tools":[{"type":"function","function":{"name":"get_time","description":"Get time for a timezone.","parameters":{"type":"object","properties":{"timezone":{"type":"string"}},"required":["timezone"]}}}],"tool_choice":"required","temperature":0,"max_tokens":256}
 JSON
 )
 
@@ -353,11 +353,11 @@ JSON
 )
 PROXY_THINKING_DEEP_REASONING='{"model":"thinking-deep","messages":[{"role":"user","content":"Which is greater, 9.11 or 9.8? Answer briefly."}],"temperature":0,"max_tokens":256}'
 PROXY_RESEARCH_TOOL=$(cat <<'JSON'
-{"model":"research","messages":[{"role":"user","content":"Call get_time with timezone UTC. Do not answer with plain text."}],"tools":[{"type":"function","function":{"name":"get_time","description":"Get time for a timezone.","parameters":{"type":"object","properties":{"timezone":{"type":"string"}},"required":["timezone"]}}}],"tool_choice":"required","temperature":0,"max_tokens":256}
+{"model":"research","messages":[{"role":"user","content":"Call get_time with timezone UTC. Do not answer with plain text."}],"chat_template_kwargs":{"enable_thinking":false},"tools":[{"type":"function","function":{"name":"get_time","description":"Get time for a timezone.","parameters":{"type":"object","properties":{"timezone":{"type":"string"}},"required":["timezone"]}}}],"tool_choice":"required","temperature":0,"max_tokens":256}
 JSON
 )
 PROXY_HAIKU_TOOL=$(cat <<'JSON'
-{"model":"haiku","messages":[{"role":"user","content":"Call get_time with timezone UTC. Do not answer with plain text."}],"tools":[{"type":"function","function":{"name":"get_time","description":"Get time for a timezone.","parameters":{"type":"object","properties":{"timezone":{"type":"string"}},"required":["timezone"]}}}],"tool_choice":"required","temperature":0,"max_tokens":256}
+{"model":"haiku","messages":[{"role":"user","content":"Call get_time with timezone UTC. Do not answer with plain text."}],"chat_template_kwargs":{"enable_thinking":false},"tools":[{"type":"function","function":{"name":"get_time","description":"Get time for a timezone.","parameters":{"type":"object","properties":{"timezone":{"type":"string"}},"required":["timezone"]}}}],"tool_choice":"required","temperature":0,"max_tokens":256}
 JSON
 )
 
@@ -385,15 +385,15 @@ check_python_json deez2-multimodal '.choices[0].message.content | ascii_downcase
 check_python_json deez2-long-context '.choices[0].message.content | ascii_downcase | test("ready")' gemma4-longctx http://192.168.1.114:8000/v1/chat/completions TrevorJS/gemma-4-26B-A4B-it-uncensored
 
 check_status deezx-health http://192.168.1.161:8000/health
-check_get_json deezx-models-a http://192.168.1.161:8000/v1/models '.data[0].id == "Qwen/Qwen3-14B"'
-check_python_long_context deezx-props-a http://192.168.1.161:8000/v1/chat/completions Qwen/Qwen3-14B 32768
+check_get_json deezx-models-a http://192.168.1.161:8000/v1/models '.data[0].id == "Qwen/Qwen3.6-27B"'
+check_python_long_context deezx-props-a http://192.168.1.161:8000/v1/chat/completions Qwen/Qwen3.6-27B 131072
 check_status deezx-haiku-health http://192.168.1.161:8001/health
-check_get_json deezx-models-b http://192.168.1.161:8001/v1/models '.data[0].id == "Qwen/Qwen3-14B"'
-check_python_long_context deezx-props-b http://192.168.1.161:8001/v1/chat/completions Qwen/Qwen3-14B 32768
-check_post_json_once deezx-tool-call-a http://192.168.1.161:8000/v1/chat/completions "$DEEZX_TOOL" '.choices[0].message.tool_calls[0].function.name == "get_time"'
-check_post_json_once deezx-tool-call-b http://192.168.1.161:8001/v1/chat/completions "$DEEZX_TOOL" '.choices[0].message.tool_calls[0].function.name == "get_time"'
-check_python_json deezx-tool-long-context-a '.usage.prompt_tokens > 25000 and .choices[0].message.tool_calls[0].function.name == "get_time"' qwen-tool-longctx http://192.168.1.161:8000/v1/chat/completions Qwen/Qwen3-14B
-check_python_json deezx-tool-long-context-b '.usage.prompt_tokens > 25000 and .choices[0].message.tool_calls[0].function.name == "get_time"' qwen-tool-longctx http://192.168.1.161:8001/v1/chat/completions Qwen/Qwen3-14B
+check_get_json deezx-models-b http://192.168.1.161:8001/v1/models '.data[0].id == "Qwen/Qwen3.6-27B"'
+check_python_long_context deezx-props-b http://192.168.1.161:8001/v1/chat/completions Qwen/Qwen3.6-27B 131072
+check_post_json_once deezx-tool-call-a http://192.168.1.161:8000/v1/chat/completions "$DEEZX_TOOL" '.choices[0].message.tool_calls[0].function.name == "get_time" and (.choices[0].message.tool_calls[0].function.arguments | fromjson | .timezone) == "UTC" and ((.choices[0].message.content // "") | contains("<think>") | not)'
+check_post_json_once deezx-tool-call-b http://192.168.1.161:8001/v1/chat/completions "$DEEZX_TOOL" '.choices[0].message.tool_calls[0].function.name == "get_time" and (.choices[0].message.tool_calls[0].function.arguments | fromjson | .timezone) == "UTC" and ((.choices[0].message.content // "") | contains("<think>") | not)'
+check_python_json deezx-tool-long-context-a '.usage.prompt_tokens > 100000 and .choices[0].message.tool_calls[0].function.name == "get_time" and ((.choices[0].message.content // "") | contains("<think>") | not)' qwen-tool-longctx http://192.168.1.161:8000/v1/chat/completions Qwen/Qwen3.6-27B
+check_python_json deezx-tool-long-context-b '.usage.prompt_tokens > 100000 and .choices[0].message.tool_calls[0].function.name == "get_time" and ((.choices[0].message.content // "") | contains("<think>") | not)' qwen-tool-longctx http://192.168.1.161:8001/v1/chat/completions Qwen/Qwen3.6-27B
 
 check_get_json deezr-models http://192.168.1.85:4000/v1/models '([.data[].id] | index("thinking")) != null and ([.data[].id] | index("thinking-deep")) != null and ([.data[].id] | index("coding")) != null and ([.data[].id] | index("research")) != null'
 check_post_json deezr-coding http://192.168.1.85:4000/v1/chat/completions "$PROXY_CODING" '.choices[0].message.role == "assistant"'
@@ -405,6 +405,8 @@ check_post_json deezr-thinking-deep-reasoning http://192.168.1.85:4000/v1/chat/c
 check_python_json deezr-thinking-multimodal '.choices[0].message.content | ascii_downcase | test("red")' gemma4-mm http://192.168.1.85:4000/v1/chat/completions thinking
 check_post_json deezr-research-tool-call http://192.168.1.85:4000/v1/chat/completions "$PROXY_RESEARCH_TOOL" '.choices[0].message.tool_calls[0].function.name == "get_time" and ((.choices[0].message.content // "") | contains("<think>") | not)'
 check_post_json deezr-haiku-tool-call http://192.168.1.85:4000/v1/chat/completions "$PROXY_HAIKU_TOOL" '.choices[0].message.tool_calls[0].function.name == "get_time" and ((.choices[0].message.content // "") | contains("<think>") | not)'
+check_python_json deezr-research-long-context '.usage.prompt_tokens > 100000 and .choices[0].message.tool_calls[0].function.name == "get_time" and ((.choices[0].message.content // "") | contains("<think>") | not)' qwen-tool-longctx http://192.168.1.85:4000/v1/chat/completions research
+check_python_json deezr-haiku-long-context '.usage.prompt_tokens > 100000 and .choices[0].message.tool_calls[0].function.name == "get_time" and ((.choices[0].message.content // "") | contains("<think>") | not)' qwen-tool-longctx http://192.168.1.85:4000/v1/chat/completions haiku
 check_header_rotation deezr-coding-model-id-rotation 12 1 http://192.168.1.85:4000/v1/chat/completions "$PROXY_CODING"
 check_header_rotation deezr-thinking-model-id-rotation 12 2 http://192.168.1.85:4000/v1/chat/completions "$PROXY_THINKING"
 
