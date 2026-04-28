@@ -6,100 +6,185 @@
   "default_run_agent": "sisyphus",
   "agents": {
     "sisyphus": {
-      "model": "litellm/thinking-deep",
+      "model": "opencode-go/kimi-k2.6",
+      "reasoningEffort": "medium",
       "permission": {
         "bash": {
           "git": "deny"
         }
-      }
+      },
+      "fallback_models": [
+        {
+          "model": "litellm/thinking-deep",
+          "reasoningEffort": "high"
+        }
+      ]
     },
     "hephaestus": {
-      "model": "litellm/coding",
+      "model": "opencode-go/deepseek-v4-pro",
+      "reasoningEffort": "medium",
       "allow_non_gpt_model": true,
       "permission": {
         "bash": {
           "git": "deny"
         }
-      }
+      },
+      "fallback_models": [
+        {
+          "model": "litellm/coding",
+          "reasoningEffort": "xhigh"
+        }
+      ]
     },
     "oracle": {
-      "model": "litellm/coding",
+      "model": "opencode-go/deepseek-v4-pro",
+      "reasoningEffort": "medium",
       "permission": {
         "bash": {
           "git": "deny"
         }
-      }
+      },
+      "fallback_models": [
+        {
+          "model": "litellm/thinking-deep",
+          "reasoningEffort": "high"
+        }
+      ]
     },
     "librarian": {
       "model": "litellm/research",
+      "reasoningEffort": "high",
       "permission": {
         "bash": {
           "git": "deny"
         }
-      }
+      },
+      "fallback_models": [
+        {
+          "model": "opencode-go/minimax-m2.7",
+          "reasoningEffort": "high"
+        }
+      ]
     },
     "explore": {
-      "model": "litellm/research",
+      "model": "litellm/coding",
+      "reasoningEffort": "low",
       "permission": {
         "bash": {
           "git": "deny"
         }
-      }
+      },
+      "fallback_models": [
+        {
+          "model": "opencode-go/minimax-m2.7",
+          "reasoningEffort": "low"
+        }
+      ]
     },
     "multimodal-looker": {
-      "model": "litellm/thinking",
+      "model": "opencode-go/mimo-v2-omni",
+      "reasoningEffort": "medium",
       "permission": {
         "bash": {
           "git": "deny"
         }
-      }
+      },
+      "fallback_models": [
+        {
+          "model": "litellm/thinking",
+          "reasoningEffort": "xhigh"
+        }
+      ]
     },
     "prometheus": {
-      "model": "litellm/coding",
+      "model": "opencode-go/glm-5.1",
+      "reasoningEffort": "xhigh",
       "permission": {
         "bash": {
           "git": "deny"
         }
-      }
+      },
+      "fallback_models": [
+        {
+          "model": "litellm/coding",
+          "reasoningEffort": "xhigh"
+        }
+      ]
     },
     "metis": {
-      "model": "litellm/coding",
+      "model": "opencode-go/kimi-k2.6",
+      "reasoningEffort": "low",
       "permission": {
         "bash": {
           "git": "deny"
         }
-      }
+      },
+      "fallback_models": [
+        {
+          "model": "litellm/coding",
+          "reasoningEffort": "low"
+        }
+      ]
     },
     "momus": {
-      "model": "litellm/research",
+      "model": "opencode-go/deepseek-v4-pro",
+      "reasoningEffort": "high",
       "permission": {
         "bash": {
           "git": "deny"
         }
-      }
+      },
+      "fallback_models": [
+        {
+          "model": "litellm/thinking",
+          "reasoningEffort": "high"
+        }
+      ]
     },
     "atlas": {
-      "model": "litellm/coding",
+      "model": "opencode-go/kimi-k2.6",
+      "reasoningEffort": "low",
       "permission": {
         "bash": {
           "git": "deny"
         }
-      }
+      },
+      "fallback_models": [
+        {
+          "model": "litellm/thinking",
+          "reasoningEffort": "low"
+        }
+      ]
     },
     "sisyphus-junior": {
       "model": "litellm/coding",
+      "reasoningEffort": "low",
       "permission": {
         "bash": {
           "git": "deny"
         }
-      }
+      },
+      "fallback_models": [
+        {
+          "model": "opencode-go/qwen3.6-plus",
+          "reasoningEffort": "low"
+        }
+      ]
     },
     "OpenCode-Builder": {
+      "model": "opencode-go/deepseek-v4-pro",
+      "reasoningEffort": "medium",
       "permission": {
         "bash": {
           "git": "deny"
         }
-      }
+      },
+      "fallback_models": [
+        {
+          "model": "litellm/coding",
+          "reasoningEffort": "xhigh"
+        }
+      ]
     }
   },
   "categories": {
