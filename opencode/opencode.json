@@ -21,7 +21,8 @@
     "opencode-agent-browser",
     "opencode-pty",
     "oh-my-openagent@latest",
-    "@franlol/opencode-md-table-formatter@latest"
+    "@franlol/opencode-md-table-formatter@latest",
+    "opencode-retry-empty"
   ],
   "provider": {
     "litellm": {
