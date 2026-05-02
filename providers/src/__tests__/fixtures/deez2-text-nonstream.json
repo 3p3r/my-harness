@@ -1,0 +1,35 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Hello! How can I help you today?",
+        "reasoning_content": "The user said \"Hi!\".\nThis is a standard greeting.\nFriendly, welcoming, and helpful.\n\n    *   Option 1: \"Hello! How can I help you today?\" (Standard)\n    *   Option 2: \"Hi there! What's on your mind?\" (Casual)\n    *   Option 3: \"Greetings! How are you doing?\" (Polite)\nA combination of friendly and helpful is usually best for an AI.\n\n*Draft:* \"Hello! How can I help you today?\""
+      }
+    }
+  ],
+  "created": 1777697832,
+  "model": "TrevorJS/gemma-4-26B-A4B-it-uncensored",
+  "system_fingerprint": "b8895-b76429a69",
+  "object": "chat.completion",
+  "usage": {
+    "completion_tokens": 126,
+    "prompt_tokens": 17,
+    "total_tokens": 143,
+    "prompt_tokens_details": { "cached_tokens": 10 }
+  },
+  "id": "chatcmpl-8vUYSUW6tGMXb3tlxRSmL12ujFlgvpE9",
+  "timings": {
+    "cache_n": 10,
+    "prompt_n": 7,
+    "prompt_ms": 77.136,
+    "prompt_per_token_ms": 11.019428571428572,
+    "prompt_per_second": 90.74880730138976,
+    "predicted_n": 126,
+    "predicted_ms": 2851.533,
+    "predicted_per_token_ms": 22.631214285714286,
+    "predicted_per_second": 44.18675849095907
+  }
+}

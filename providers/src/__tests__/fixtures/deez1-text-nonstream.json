@@ -1,0 +1,35 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Hi! 👋 How can I help you today?",
+        "reasoning_content": "Here's a thinking process:\n\n1.  **Analyze User Input:** The user said \"Hi!\" - a simple greeting.\n2.  **Identify Intent:** The user is initiating a conversation. No specific question or task is provided.\n3.  **Determine Response Strategy:** \n   - Acknowledge the greeting warmly\n   - Offer assistance\n   - Keep it open-ended to encourage the user to share what they need\n4.  **Draft Response (Mental):** Hi there! How can I help you today?\n5.  **Refine Response:** Keep it friendly, concise, and inviting. \"Hi! 👋 How can I assist you today?\" matches the tone and purpose well.\n6.  **Final Output Generation:** Output the refined response.✅"
+      }
+    }
+  ],
+  "created": 1777697809,
+  "model": "Qwen/Qwen3.6-35B-A3B",
+  "system_fingerprint": "b8982-b42c7fa5b",
+  "object": "chat.completion",
+  "usage": {
+    "completion_tokens": 178,
+    "prompt_tokens": 12,
+    "total_tokens": 190,
+    "prompt_tokens_details": { "cached_tokens": 0 }
+  },
+  "id": "chatcmpl-PcgbhaO7YfekQViZN1aINgrmnXYSd2ZY",
+  "timings": {
+    "cache_n": 0,
+    "prompt_n": 12,
+    "prompt_ms": 74.217,
+    "prompt_per_token_ms": 6.18475,
+    "prompt_per_second": 161.68802295969925,
+    "predicted_n": 178,
+    "predicted_ms": 3535.76,
+    "predicted_per_token_ms": 19.863820224719102,
+    "predicted_per_second": 50.34278344684027
+  }
+}

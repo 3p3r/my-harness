@@ -1,0 +1,45 @@
+{
+  "choices": [
+    {
+      "finish_reason": "tool_calls",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "",
+        "reasoning_content": "Here's a thinking process:\n\n1.  **Analyze User Input:** The user wants me to call the `get_time` function with the timezone parameter set to \"UTC\".\n2.  **Identify Function:** The available function is `get_time`.\n3.  **Check Parameters:** The function requires one parameter: `timezone` (string).\n4.  **Map Input to Parameters:** The user explicitly provided \"UTC\" as the timezone.\n5.  **Construct Function Call:** `get_time(timezone=\"UTC\")`\n6.  **Execute/Output:** Generate the function call in the correct format.✅",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "get_time",
+              "arguments": "{\"timezone\":\"UTC\"}"
+            },
+            "id": "mzQFeBEBza9Ly70o60N8bbzMwFPAQpLT"
+          }
+        ]
+      }
+    }
+  ],
+  "created": 1777697857,
+  "model": "Qwen/Qwen3.6-27B",
+  "system_fingerprint": "b8982-b42c7fa5b",
+  "object": "chat.completion",
+  "usage": {
+    "completion_tokens": 161,
+    "prompt_tokens": 274,
+    "total_tokens": 435,
+    "prompt_tokens_details": { "cached_tokens": 0 }
+  },
+  "id": "chatcmpl-pmpIjhlQLl4JzRNXurSSpIGalpff6JND",
+  "timings": {
+    "cache_n": 0,
+    "prompt_n": 274,
+    "prompt_ms": 281.937,
+    "prompt_per_token_ms": 1.0289671532846716,
+    "prompt_per_second": 971.8483207241334,
+    "predicted_n": 161,
+    "predicted_ms": 4060.742,
+    "predicted_per_token_ms": 25.222,
+    "predicted_per_second": 39.64792641344857
+  }
+}

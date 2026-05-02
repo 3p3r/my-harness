@@ -1,0 +1,45 @@
+{
+  "choices": [
+    {
+      "finish_reason": "tool_calls",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "",
+        "reasoning_content": "Thinking Process:\n1.  Identify the user's request: Call `get_time` with the timezone \"UTC\".\n2.  Check available tools: `get_time` exists, requires `timezone` (string).\n3.  Prepare the tool call: `get_time(timezone=\"UTC\")`.\n4.  Execute the tool call.✅",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "get_time",
+              "arguments": "{\"timezone\":\"UTC\"}"
+            },
+            "id": "rP4KeGsXzvsFiykRFxRcM02or8Lq9DyJ"
+          }
+        ]
+      }
+    }
+  ],
+  "created": 1777697815,
+  "model": "Qwen/Qwen3.6-35B-A3B",
+  "system_fingerprint": "b8982-b42c7fa5b",
+  "object": "chat.completion",
+  "usage": {
+    "completion_tokens": 102,
+    "prompt_tokens": 274,
+    "total_tokens": 376,
+    "prompt_tokens_details": { "cached_tokens": 270 }
+  },
+  "id": "chatcmpl-IPDFxDsuaXj4uGB7qsFD0KQn2Ua9xbeB",
+  "timings": {
+    "cache_n": 270,
+    "prompt_n": 4,
+    "prompt_ms": 42.474,
+    "prompt_per_token_ms": 10.6185,
+    "prompt_per_second": 94.1752601591562,
+    "predicted_n": 102,
+    "predicted_ms": 2054.454,
+    "predicted_per_token_ms": 20.141705882352944,
+    "predicted_per_second": 49.64822770429515
+  }
+}

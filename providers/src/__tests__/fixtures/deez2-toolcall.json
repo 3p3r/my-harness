@@ -1,0 +1,45 @@
+{
+  "choices": [
+    {
+      "finish_reason": "tool_calls",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "",
+        "reasoning_content": "The user wants to call the `get_time` function with the argument `timezone='UTC'`.\nThe `get_time` function takes one parameter: `timezone` (a string).\nThe user has provided the value 'UTC' for the `timezone` parameter.",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "get_time",
+              "arguments": "{\"timezone\":\"UTC\"}"
+            },
+            "id": "bqq1TQ0NbJWW1tfUhbPTTpYzEZZdtf63"
+          }
+        ]
+      }
+    }
+  ],
+  "created": 1777697837,
+  "model": "TrevorJS/gemma-4-26B-A4B-it-uncensored",
+  "system_fingerprint": "b8895-b76429a69",
+  "object": "chat.completion",
+  "usage": {
+    "completion_tokens": 76,
+    "prompt_tokens": 66,
+    "total_tokens": 142,
+    "prompt_tokens_details": { "cached_tokens": 0 }
+  },
+  "id": "chatcmpl-cJqRwjArGHkkj2hbEGVlwWSonzz0b25G",
+  "timings": {
+    "cache_n": 0,
+    "prompt_n": 66,
+    "prompt_ms": 238.711,
+    "prompt_per_token_ms": 3.6168333333333336,
+    "prompt_per_second": 276.48495461038664,
+    "predicted_n": 76,
+    "predicted_ms": 1674.911,
+    "predicted_per_token_ms": 22.038302631578947,
+    "predicted_per_second": 45.37554532748307
+  }
+}
