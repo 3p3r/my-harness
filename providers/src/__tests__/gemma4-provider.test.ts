@@ -1,6 +1,9 @@
 import { vi, describe, it, expect, afterEach } from "vitest";
 import type { LanguageModelV1 } from "ai";
-import { createGemma4Provider, type Gemma4ProviderConfig } from "../gemma4-provider";
+import {
+  createGemma4Provider,
+  type Gemma4ProviderConfig,
+} from "../gemma4-provider";
 
 type TestModel = LanguageModelV1 & {
   provider: string;

@@ -1,6 +1,9 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import type { LanguageModelV1 } from "ai";
-import type { Qwen36ModelId } from "./types";
+import type { Qwen36ModelId, RetryConfig, QueueConfig } from "./types";
+import { DEFAULT_RETRY_CONFIG, DEFAULT_QUEUE_CONFIG } from "./constants";
+import { withRetry } from "./retry-wrapper";
+import { withConcurrencyLimit } from "./queue-wrapper";
 
 /**
  * Configuration for the Qwen3.6 provider.
@@ -20,6 +23,10 @@ export interface Qwen36ProviderConfig {
   baseURL: string;
   /** Enable reasoning output via `chat_template_kwargs.enable_thinking`. Defaults to `true`. */
   enableThinking?: boolean;
+  /** Retry configuration for empty responses. */
+  retry?: RetryConfig;
+  /** Queue configuration for concurrency limiting. */
+  queue?: QueueConfig;
 }
 
 /**
@@ -58,5 +65,19 @@ export function createQwen36Provider(
     }),
   });
 
-  return provider.languageModel(config.modelId) as unknown as LanguageModelV1;
+  let model = provider.languageModel(
+    config.modelId,
+  ) as unknown as LanguageModelV1;
+
+  if (config.queue) {
+    const queueConfig = { ...DEFAULT_QUEUE_CONFIG, ...config.queue };
+    model = withConcurrencyLimit(model, queueConfig);
+  }
+
+  if (config.retry) {
+    const retryConfig = { ...DEFAULT_RETRY_CONFIG, ...config.retry };
+    model = withRetry(model, retryConfig);
+  }
+
+  return model;
 }

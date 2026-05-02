@@ -6,7 +6,7 @@
   "default_run_agent": "sisyphus",
   "agents": {
     "sisyphus": {
-      "model": "opencode-go/kimi-k2.6",
+      "model": "opencode-go/deepseek-v4-pro",
       "reasoningEffort": "medium",
       "permission": {
         "bash": {
@@ -97,7 +97,7 @@
       ]
     },
     "metis": {
-      "model": "opencode-go/kimi-k2.6",
+      "model": "opencode-go/deepseek-v4-pro",
       "reasoningEffort": "low",
       "permission": {
         "bash": {
@@ -121,7 +121,7 @@
       ]
     },
     "atlas": {
-      "model": "opencode-go/kimi-k2.6",
+      "model": "opencode-go/deepseek-v4-pro",
       "reasoningEffort": "low",
       "permission": {
         "bash": {

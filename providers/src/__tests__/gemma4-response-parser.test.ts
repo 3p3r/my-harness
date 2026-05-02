@@ -59,7 +59,9 @@ describe("gemma4-response-parser", () => {
       // In deez2-text-nonstream.json, reasoning_content IS present.
       // Let's mock one without it.
       const noReasoning = JSON.parse(JSON.stringify(response));
-      delete (noReasoning.choices[0].message as unknown as Record<string, unknown>).reasoning_content;
+      delete (
+        noReasoning.choices[0].message as unknown as Record<string, unknown>
+      ).reasoning_content;
       expect(parseGemma4Reasoning(noReasoning)).toBeUndefined();
     });
   });

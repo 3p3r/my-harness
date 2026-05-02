@@ -1,6 +1,9 @@
 import { vi, describe, it, expect, afterEach } from "vitest";
 import type { LanguageModelV1 } from "ai";
-import { createQwen36Provider, type Qwen36ProviderConfig } from "../qwen36-provider";
+import {
+  createQwen36Provider,
+  type Qwen36ProviderConfig,
+} from "../qwen36-provider";
 
 type TestModel = LanguageModelV1 & {
   provider: string;

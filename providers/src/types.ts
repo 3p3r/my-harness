@@ -21,6 +21,24 @@ export interface LlamaCppProviderConfig {
   timeout?: number;
 }
 
+export interface RetryConfig {
+  /** Maximum number of attempts (first call + retries). Default 5. */
+  maxAttempts?: number;
+  /** Initial delay in ms before retrying. Default 200. */
+  startingDelay?: number;
+  /** Multiplier applied to delay on each retry. Default 2. */
+  timeMultiple?: number;
+  /** Jitter strategy to spread retry timing. Default "full". */
+  jitter?: "none" | "full";
+}
+
+export interface QueueConfig {
+  /** Maximum concurrent endpoint calls. Default 1. */
+  maxConcurrency?: number;
+  /** Message returned when at capacity. Default: "Prompt queued. Capacity busy, will process in FIFO order." */
+  queuedMessage?: string;
+}
+
 /**
  * Tool call structure matching the OpenAI format returned by llama.cpp.
  */

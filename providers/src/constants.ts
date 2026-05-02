@@ -24,6 +24,25 @@ export const MODEL_SUPPORTS_VISION: Record<string, boolean> = {
 };
 
 import type { LlamaCppReasoningLevel } from "./types";
+import type { RetryConfig, QueueConfig } from "./types";
+
+/**
+ * Default retry configuration values.
+ */
+export const DEFAULT_RETRY_CONFIG: Readonly<Required<RetryConfig>> = {
+  maxAttempts: 5,
+  startingDelay: 200,
+  timeMultiple: 2,
+  jitter: "full",
+} as const;
+
+/**
+ * Default queue configuration values.
+ */
+export const DEFAULT_QUEUE_CONFIG: Readonly<Required<QueueConfig>> = {
+  maxConcurrency: 1,
+  queuedMessage: "Prompt queued. Capacity busy, will process in FIFO order.",
+} as const;
 
 /**
  * Maps Vercel AI SDK v4 reasoning levels to llama.cpp `enable_thinking`.

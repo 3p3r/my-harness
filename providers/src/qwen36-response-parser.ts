@@ -21,11 +21,7 @@ export function parseQwen36ToolCalls(response: LlamaCppChatCompletionResponse):
   }
 
   return toolCalls.map((tc) => {
-    if (
-      !tc.id ||
-      !tc.function?.name ||
-      tc.function.arguments === undefined
-    ) {
+    if (!tc.id || !tc.function?.name || tc.function.arguments === undefined) {
       throw new LlamaCppParsingError("Malformed tool call", "tool_calls", tc);
     }
     return {

@@ -68,7 +68,9 @@ describe("Providers Integration", () => {
       // 1. Verify LanguageModelV1 properties
       expect(["v1", "v3"]).toContain(model.specificationVersion);
       // We use (model as any) because these might not be in the official LanguageModelV1 interface
-      expect((model as unknown as TestModel).provider).toBe("llama-cpp-qwen36.chat");
+      expect((model as unknown as TestModel).provider).toBe(
+        "llama-cpp-qwen36.chat",
+      );
       expect((model as unknown as TestModel).modelId).toBe(modelId);
       expect(typeof model.doGenerate).toBe("function");
       expect(typeof model.doStream).toBe("function");
@@ -158,7 +160,9 @@ describe("Providers Integration", () => {
 
       // 1. Verify LanguageModelV1 properties
       expect(["v1", "v3"]).toContain(model.specificationVersion);
-      expect((model as unknown as TestModel).provider).toBe("llama-cpp-gemma4.chat");
+      expect((model as unknown as TestModel).provider).toBe(
+        "llama-cpp-gemma4.chat",
+      );
       expect((model as unknown as TestModel).modelId).toBe(modelId);
       expect(typeof model.doGenerate).toBe("function");
       expect(typeof model.doStream).toBe("function");
@@ -232,6 +236,113 @@ describe("Providers Integration", () => {
           ],
         }),
       ).rejects.toThrow("Network error");
+    });
+  });
+
+  describe("Retry + Queue Composition", () => {
+    const normalResponse = (content: string = "Hello") =>
+      mockFetchResponse("test-model", content);
+
+    it("Qwen provider with retry config returns valid LanguageModelV1", () => {
+      const model = createQwen36Provider({
+        modelId: "Qwen/Qwen3.6-35B-A3B",
+        baseURL: "http://localhost:8010",
+        retry: { maxAttempts: 3, startingDelay: 1 },
+      });
+
+      expect(["v1", "v3"]).toContain(model.specificationVersion);
+      expect(typeof model.doGenerate).toBe("function");
+      expect(typeof model.doStream).toBe("function");
+    });
+
+    it("Qwen provider with queue config returns valid LanguageModelV1", () => {
+      const model = createQwen36Provider({
+        modelId: "Qwen/Qwen3.6-35B-A3B",
+        baseURL: "http://localhost:8010",
+        queue: { maxConcurrency: 2 },
+      });
+
+      expect(["v1", "v3"]).toContain(model.specificationVersion);
+      expect(typeof model.doGenerate).toBe("function");
+      expect(typeof model.doStream).toBe("function");
+    });
+
+    it("Qwen provider with both retry and queue configs works", () => {
+      const model = createQwen36Provider({
+        modelId: "Qwen/Qwen3.6-35B-A3B",
+        baseURL: "http://localhost:8010",
+        retry: { maxAttempts: 3 },
+        queue: { maxConcurrency: 1 },
+      });
+
+      expect(["v1", "v3"]).toContain(model.specificationVersion);
+      expect(typeof model.doGenerate).toBe("function");
+      expect(typeof model.doStream).toBe("function");
+    });
+
+    it("Gemma provider with both configs works", () => {
+      const model = createGemma4Provider({
+        baseURL: "http://localhost:8000",
+        retry: { maxAttempts: 2 },
+        queue: { maxConcurrency: 1, queuedMessage: "Server busy" },
+      });
+
+      expect(["v1", "v3"]).toContain(model.specificationVersion);
+      expect(typeof model.doGenerate).toBe("function");
+      expect(typeof model.doStream).toBe("function");
+    });
+
+    it("provider without retry/queue still works (backwards compatible)", async () => {
+      const model = createQwen36Provider({
+        modelId: "Qwen/Qwen3.6-27B",
+        baseURL: "http://localhost:8010",
+      });
+
+      const fetchSpy = vi
+        .fn()
+        .mockResolvedValue(normalResponse("backwards compat"));
+      vi.stubGlobal("fetch", fetchSpy);
+
+      const result = await (model as unknown as TestModel).doGenerate({
+        inputFormat: "messages",
+        mode: { type: "regular" },
+        prompt: [{ role: "user", content: [{ type: "text", text: "Hi" }] }],
+      });
+
+      const resultObj = result as {
+        content: Array<{ type: string; text?: string }>;
+      };
+      expect(resultObj.content[0].text).toBe("backwards compat");
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("retry triggers on empty API response in composed provider", async () => {
+      const model = createQwen36Provider({
+        modelId: "Qwen/Qwen3.6-35B-A3B",
+        baseURL: "http://localhost:8010",
+        retry: { maxAttempts: 3, startingDelay: 1 },
+      });
+
+      const fetchSpy = vi
+        .fn()
+        .mockResolvedValueOnce(mockFetchResponse("test", ""))
+        .mockResolvedValueOnce(mockFetchResponse("test", ""))
+        .mockResolvedValueOnce(
+          mockFetchResponse("test", "Success after retry"),
+        );
+      vi.stubGlobal("fetch", fetchSpy);
+
+      const result = await (model as unknown as TestModel).doGenerate({
+        inputFormat: "messages",
+        mode: { type: "regular" },
+        prompt: [{ role: "user", content: [{ type: "text", text: "Hi" }] }],
+      });
+
+      const resultObj = result as {
+        content: Array<{ type: string; text?: string }>;
+      };
+      expect(resultObj.content[0].text).toBe("Success after retry");
+      expect(fetchSpy).toHaveBeenCalledTimes(3);
     });
   });
 });
