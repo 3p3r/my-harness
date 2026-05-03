@@ -22,7 +22,8 @@
     "opencode-pty",
     "oh-my-openagent@latest",
     "@franlol/opencode-md-table-formatter@latest",
-    "opencode-retry-empty"
+    "opencode-retry-empty",
+    "@tarquinen/opencode-dcp@latest"
   ],
   "provider": {
     "litellm": {
@@ -32,54 +33,11 @@
         "baseURL": "http://deezr:4000/v1"
       },
       "models": {
-        "thinking": {
-          "id": "thinking",
-          "name": "Thinking (Gemma 4 Q8, default no-think)",
-          "family": "gemma",
-          "attachment": true,
-          "reasoning": true,
-          "tool_call": true,
-          "temperature": true,
-          "limit": {
-            "context": 262144,
-            "output": 16384
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image"
-            ],
-            "output": [
-              "text"
-            ]
-          }
-        },
-        "thinking-deep": {
-          "id": "thinking-deep",
-          "name": "Thinking Deep (Gemma 4 Q8)",
-          "family": "gemma",
-          "attachment": true,
-          "reasoning": true,
-          "tool_call": true,
-          "temperature": true,
-          "limit": {
-            "context": 262144,
-            "output": 16384
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image"
-            ],
-            "output": [
-              "text"
-            ]
-          }
-        },
-        "coding": {
-          "id": "coding",
-          "name": "Coding (Qwen3.6 35B Q8)",
+        "my-sonnet": {
+          "id": "my-sonnet",
+          "name": "My Sonnet (Full Qwen3.6 35B)",
           "family": "qwen",
+          "attachment": false,
           "reasoning": true,
           "tool_call": true,
           "temperature": true,
@@ -88,32 +46,42 @@
             "output": 16384
           },
           "modalities": {
-            "input": [
-              "text"
-            ],
-            "output": [
-              "text"
-            ]
+            "input": ["text"],
+            "output": ["text"]
           }
         },
-        "research": {
-          "id": "research",
-          "name": "Research (Dual Qwen3.6 27B Q4)",
+        "my-haiku": {
+          "id": "my-haiku",
+          "name": "My Haiku (Routed smaller Qwen3.6 27B)",
           "family": "qwen",
+          "attachment": false,
           "reasoning": false,
-          "temperature": true,
           "tool_call": true,
+          "temperature": true,
           "limit": {
             "context": 131072,
             "output": 8192
           },
           "modalities": {
-            "input": [
-              "text"
-            ],
-            "output": [
-              "text"
-            ]
+            "input": ["text"],
+            "output": ["text"]
+          }
+        },
+        "my-opus": {
+          "id": "my-opus",
+          "name": "My Opus (Routed Gemma 4 26B)",
+          "family": "gemma",
+          "attachment": true,
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "limit": {
+            "context": 262144,
+            "output": 16384
+          },
+          "modalities": {
+            "input": ["text", "image"],
+            "output": ["text"]
           }
         }
       }

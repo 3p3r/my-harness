@@ -10,6 +10,7 @@ services:
       - "4000:4000"
     volumes:
       - ./config.yaml:/app/config.yaml:ro
+      - ./rules.py:/app/rules.py:ro
     environment:
       DISABLE_ADMIN_UI: "true"
     ulimits:

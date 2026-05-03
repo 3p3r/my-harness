@@ -6,7 +6,7 @@
   "default_run_agent": "sisyphus",
   "agents": {
     "sisyphus": {
-      "model": "opencode-go/kimi-k2.6",
+      "model": "opencode-go/deepseek-v4-pro",
       "reasoningEffort": "medium",
       "permission": {
         "bash": {
@@ -14,175 +14,130 @@
         }
       },
       "fallback_models": [
-        "litellm/thinking-deep"
+        "litellm/my-opus"
       ]
     },
     "hephaestus": {
-      "model": "opencode-go/deepseek-v4-pro",
+      "model": "litellm/my-opus",
       "reasoningEffort": "medium",
       "allow_non_gpt_model": true,
       "permission": {
         "bash": {
           "git": "deny"
         }
-      },
-      "fallback_models": [
-        "litellm/coding"
-      ]
+      }
     },
     "oracle": {
-      "model": "opencode-go/deepseek-v4-pro",
+      "model": "litellm/my-sonnet",
       "reasoningEffort": "medium",
       "permission": {
         "bash": {
           "git": "deny"
         }
-      },
-      "fallback_models": [
-        "litellm/thinking-deep"
-      ]
+      }
     },
     "librarian": {
-      "model": "litellm/research",
+      "model": "litellm/my-haiku",
       "permission": {
         "bash": {
           "git": "deny"
         }
-      },
-      "fallback_models": [
-        {
-          "model": "opencode-go/minimax-m2.7",
-          "reasoningEffort": "high"
-        }
-      ]
+      }
     },
     "explore": {
-      "model": "litellm/coding",
+      "model": "litellm/my-sonnet",
       "permission": {
         "bash": {
           "git": "deny"
         }
-      },
-      "fallback_models": [
-        {
-          "model": "opencode-go/minimax-m2.7",
-          "reasoningEffort": "low"
-        }
-      ]
+      }
     },
     "multimodal-looker": {
-      "model": "litellm/thinking",
+      "model": "litellm/my-opus",
       "permission": {
         "bash": {
           "git": "deny"
         }
-      },
-      "fallback_models": [
-        {
-          "model": "opencode-go/mimo-v2-omni",
-          "reasoningEffort": "medium"
-        }
-      ]
+      }
     },
     "prometheus": {
-      "model": "opencode-go/glm-5.1",
+      "model": "litellm/my-opus",
       "reasoningEffort": "xhigh",
       "permission": {
         "bash": {
           "git": "deny"
         }
-      },
-      "fallback_models": [
-        "litellm/coding"
-      ]
+      }
     },
     "metis": {
-      "model": "opencode-go/kimi-k2.6",
+      "model": "litellm/my-opus",
       "reasoningEffort": "low",
       "permission": {
         "bash": {
           "git": "deny"
         }
-      },
-      "fallback_models": [
-        "litellm/coding"
-      ]
+      }
     },
     "momus": {
-      "model": "opencode-go/deepseek-v4-pro",
+      "model": "litellm/my-opus",
       "reasoningEffort": "high",
       "permission": {
         "bash": {
           "git": "deny"
         }
-      },
-      "fallback_models": [
-        "litellm/thinking"
-      ]
+      }
     },
     "atlas": {
-      "model": "opencode-go/kimi-k2.6",
+      "model": "litellm/my-sonnet",
       "reasoningEffort": "low",
       "permission": {
         "bash": {
           "git": "deny"
         }
-      },
-      "fallback_models": [
-        "litellm/thinking"
-      ]
+      }
     },
     "sisyphus-junior": {
-      "model": "litellm/coding",
+      "model": "litellm/my-sonnet",
       "permission": {
         "bash": {
           "git": "deny"
         }
-      },
-      "fallback_models": [
-        {
-          "model": "opencode-go/qwen3.6-plus",
-          "reasoningEffort": "low"
-        }
-      ]
+      }
     },
     "OpenCode-Builder": {
-      "model": "opencode-go/deepseek-v4-pro",
+      "model": "litellm/my-sonnet",
       "reasoningEffort": "medium",
       "permission": {
         "bash": {
           "git": "deny"
         }
-      },
-      "fallback_models": [
-        "litellm/coding"
-      ]
+      }
     }
   },
   "categories": {
     "visual-engineering": {
-      "model": "litellm/thinking"
+      "model": "litellm/my-opus"
     },
     "ultrabrain": {
-      "model": "litellm/coding"
+      "model": "litellm/my-sonnet"
     },
     "deep": {
-      "model": "litellm/thinking-deep"
+      "model": "litellm/my-opus"
     },
     "artistry": {
-      "model": "litellm/research"
+      "model": "litellm/my-haiku"
     },
     "quick": {
-      "model": "litellm/coding"
+      "model": "litellm/my-sonnet"
     },
     "unspecified-low": {
-      "model": "litellm/coding"
+      "model": "litellm/my-sonnet"
     },
     "unspecified-high": {
-      "model": "litellm/thinking-deep"
+      "model": "litellm/my-opus"
     },
     "writing": {
-      "model": "litellm/research"
+      "model": "litellm/my-haiku"
     }
   },
   "start_work": {
