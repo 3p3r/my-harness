@@ -9,6 +9,7 @@ import {
   mapGemma4FinishReason,
   parseGemma4Usage,
 } from "../gemma4-response-parser";
+import { LlamaCppParsingError } from "../types";
 import type {
   LlamaCppChatCompletionResponse,
   LlamaCppStreamChunk,
@@ -39,6 +40,13 @@ describe("gemma4-response-parser", () => {
       const response = loadFixture("deez2-toolcall.json");
       expect(parseGemma4Content(response)).toBe("");
     });
+
+    it("should throw LlamaCppParsingError when no message exists", () => {
+      const response = {
+        choices: [],
+      } as unknown as LlamaCppChatCompletionResponse;
+      expect(() => parseGemma4Content(response)).toThrow(LlamaCppParsingError);
+    });
   });
 
   describe("parseGemma4Reasoning", () => {
@@ -64,6 +72,15 @@ describe("gemma4-response-parser", () => {
       ).reasoning_content;
       expect(parseGemma4Reasoning(noReasoning)).toBeUndefined();
     });
+
+    it("should throw LlamaCppParsingError when no message exists", () => {
+      const response = {
+        choices: [],
+      } as unknown as LlamaCppChatCompletionResponse;
+      expect(() => parseGemma4Reasoning(response)).toThrow(
+        LlamaCppParsingError,
+      );
+    });
   });
 
   describe("parseGemma4ToolCalls", () => {
@@ -81,6 +98,15 @@ describe("gemma4-response-parser", () => {
     it("should return undefined if no tool calls are present", () => {
       const response = loadFixture("deez2-text-nonstream.json");
       expect(parseGemma4ToolCalls(response)).toBeUndefined();
+    });
+
+    it("should throw LlamaCppParsingError when no message exists", () => {
+      const response = {
+        choices: [],
+      } as unknown as LlamaCppChatCompletionResponse;
+      expect(() => parseGemma4ToolCalls(response)).toThrow(
+        LlamaCppParsingError,
+      );
     });
   });
 
@@ -208,6 +234,39 @@ describe("gemma4-response-parser", () => {
         ],
       };
       expect(parseGemma4StreamChunk(chunk)).toBeUndefined();
+    });
+
+    it("should parse tool-call-delta from stream chunk", () => {
+      const chunk: LlamaCppStreamChunk = {
+        id: "1",
+        object: "chunk",
+        created: 123,
+        model: "m",
+        choices: [
+          {
+            index: 0,
+            delta: {
+              tool_calls: [
+                {
+                  id: "call_123",
+                  type: "function",
+                  function: { name: "get_time", arguments: '{"tz":"UTC"}' },
+                },
+              ],
+            },
+            finish_reason: null,
+          },
+        ],
+      };
+      const result = parseGemma4StreamChunk(chunk);
+      expect(result).toEqual({
+        type: "tool-call-delta",
+        toolCallDelta: {
+          type: "function",
+          function: { name: "get_time", arguments: '{"tz":"UTC"}' },
+          id: "call_123",
+        },
+      });
     });
   });
 });

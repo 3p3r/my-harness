@@ -116,6 +116,13 @@ describe("qwen36-response-parser", () => {
       } as unknown as LlamaCppChatCompletionResponse;
       expect(parseQwen36Content(response)).toBeNull();
     });
+
+    it("should return null if content is undefined", () => {
+      const response = {
+        choices: [{ message: {} }],
+      } as unknown as LlamaCppChatCompletionResponse;
+      expect(parseQwen36Content(response)).toBeNull();
+    });
   });
 
   describe("parseQwen36StreamChunk", () => {
@@ -170,6 +177,38 @@ describe("qwen36-response-parser", () => {
         choices: [{ delta: {} }],
       } as unknown as LlamaCppStreamChunk;
       expect(parseQwen36StreamChunk(chunk)).toBeUndefined();
+    });
+
+    it("should return undefined when choices array is empty", () => {
+      const chunk = {
+        choices: [],
+      } as unknown as LlamaCppStreamChunk;
+      expect(parseQwen36StreamChunk(chunk)).toBeUndefined();
+    });
+
+    it("should return undefined when delta is missing from choice", () => {
+      const chunk = {
+        choices: [{ finish_reason: null }],
+      } as unknown as LlamaCppStreamChunk;
+      expect(parseQwen36StreamChunk(chunk)).toBeUndefined();
+    });
+
+    it("should use defaults when tool-call function name is missing", () => {
+      const chunk = {
+        choices: [
+          {
+            delta: {
+              tool_calls: [{ id: "123", type: "function", function: {} }],
+            },
+          },
+        ],
+      } as unknown as LlamaCppStreamChunk;
+      const result = parseQwen36StreamChunk(chunk);
+      expect(result).toEqual({
+        type: "tool-call",
+        function: { name: "", arguments: "" },
+        toolCallId: "123",
+      });
     });
   });
 

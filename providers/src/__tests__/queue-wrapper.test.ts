@@ -10,7 +10,9 @@ const testCallOptions: LanguageModelV1CallOptions = {
 
 type ContentPart = { type: string; text?: string };
 
-function makeBaseModel(overrides: Partial<LanguageModelV1> = {}): LanguageModelV1 {
+function makeBaseModel(
+  overrides: Partial<LanguageModelV1> = {},
+): LanguageModelV1 {
   return {
     specificationVersion: "v1",
     provider: "test-provider",
@@ -150,7 +152,9 @@ describe("withConcurrencyLimit", () => {
     const base = makeBaseModel({ doGenerate });
     const wrapped = withConcurrencyLimit(base, { maxConcurrency: 1 });
 
-    await expect(wrapped.doGenerate(testCallOptions)).rejects.toThrow("model crash");
+    await expect(wrapped.doGenerate(testCallOptions)).rejects.toThrow(
+      "model crash",
+    );
 
     const second = await wrapped.doGenerate(testCallOptions);
     expect(getText(second)).toBe("after error");
@@ -204,6 +208,43 @@ describe("withConcurrencyLimit", () => {
     const result = await wrapped.doGenerate(testCallOptions);
     expect(getText(result)).toBe(
       "Prompt queued. Capacity busy, will process in FIFO order.",
+    );
+  });
+
+  it("releases slot after errored doStream (finally block)", async () => {
+    const error = new Error("stream crash");
+    const doStream = vi
+      .fn()
+      .mockRejectedValueOnce(error)
+      .mockResolvedValueOnce({
+        stream: new ReadableStream({
+          start(c) {
+            c.enqueue({ type: "text-delta", textDelta: "after error" });
+            c.close();
+          },
+        }),
+        rawCall: { rawPrompt: null, rawSettings: {} },
+      } as unknown as ReturnType<LanguageModelV1["doStream"]>);
+    const base = makeBaseModel({ doStream });
+    const wrapped = withConcurrencyLimit(base, { maxConcurrency: 1 });
+
+    await expect(wrapped.doStream(testCallOptions)).rejects.toThrow(
+      "stream crash",
+    );
+
+    const result = await wrapped.doStream(testCallOptions);
+    expect(doStream).toHaveBeenCalledTimes(2);
+    const reader = (result as { stream: ReadableStream }).stream.getReader();
+    const chunks: Record<string, unknown>[] = [];
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value as Record<string, unknown>);
+    }
+    const textChunks = chunks.filter((c) => c.type === "text-delta");
+    expect(textChunks.length).toBe(1);
+    expect((textChunks[0] as { textDelta: string }).textDelta).toBe(
+      "after error",
     );
   });
 });

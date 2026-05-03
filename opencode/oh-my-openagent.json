@@ -14,7 +14,7 @@
         }
       },
       "fallback_models": [
-        "litellm/thinking-deep"
+        "deez2_8000/thinking-deep"
       ]
     },
     "hephaestus": {
@@ -27,7 +27,7 @@
         }
       },
       "fallback_models": [
-        "litellm/coding"
+        "deez1_8010/coding"
       ]
     },
     "oracle": {
@@ -39,11 +39,11 @@
         }
       },
       "fallback_models": [
-        "litellm/thinking-deep"
+        "deez2_8000/thinking-deep"
       ]
     },
     "librarian": {
-      "model": "litellm/research",
+      "model": "deezx_8000/research",
       "permission": {
         "bash": {
           "git": "deny"
@@ -57,7 +57,7 @@
       ]
     },
     "explore": {
-      "model": "litellm/coding",
+      "model": "deez1_8010/coding",
       "permission": {
         "bash": {
           "git": "deny"
@@ -71,7 +71,7 @@
       ]
     },
     "multimodal-looker": {
-      "model": "litellm/thinking",
+      "model": "deez2_8000/thinking",
       "permission": {
         "bash": {
           "git": "deny"
@@ -93,7 +93,7 @@
         }
       },
       "fallback_models": [
-        "litellm/coding"
+        "deez1_8010/coding"
       ]
     },
     "metis": {
@@ -105,7 +105,7 @@
         }
       },
       "fallback_models": [
-        "litellm/coding"
+        "deez1_8010/coding"
       ]
     },
     "momus": {
@@ -117,7 +117,7 @@
         }
       },
       "fallback_models": [
-        "litellm/thinking"
+        "deez2_8000/thinking"
       ]
     },
     "atlas": {
@@ -129,11 +129,11 @@
         }
       },
       "fallback_models": [
-        "litellm/thinking"
+        "deez2_8000/thinking"
       ]
     },
     "sisyphus-junior": {
-      "model": "litellm/coding",
+      "model": "deez1_8010/coding",
       "permission": {
         "bash": {
           "git": "deny"
@@ -155,34 +155,34 @@
         }
       },
       "fallback_models": [
-        "litellm/coding"
+        "deez1_8010/coding"
       ]
     }
   },
   "categories": {
     "visual-engineering": {
-      "model": "litellm/thinking"
+      "model": "deez2_8000/thinking"
     },
     "ultrabrain": {
-      "model": "litellm/coding"
+      "model": "deez1_8010/coding"
     },
     "deep": {
-      "model": "litellm/thinking-deep"
+      "model": "deez2_8000/thinking-deep"
     },
     "artistry": {
-      "model": "litellm/research"
+      "model": "deezx_8000/research"
     },
     "quick": {
-      "model": "litellm/coding"
+      "model": "deez1_8010/coding"
     },
     "unspecified-low": {
-      "model": "litellm/coding"
+      "model": "deez1_8010/coding"
     },
     "unspecified-high": {
-      "model": "litellm/thinking-deep"
+      "model": "deez2_8000/thinking-deep"
     },
     "writing": {
-      "model": "litellm/research"
+      "model": "deezx_8000/research"
     }
   },
   "start_work": {

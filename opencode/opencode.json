@@ -25,16 +25,45 @@
     "opencode-retry-empty"
   ],
   "provider": {
-    "litellm": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "LiteLLM",
+    "deez1_8010": {
+      "npm": "@my-harness/providers",
+      "name": "deez1_8010",
       "options": {
-        "baseURL": "http://deezr:4000/v1"
+        "slots": 4
+      },
+      "models": {
+        "coding": {
+          "id": "coding",
+          "name": "Coding (Qwen3.6 35B Q8)",
+          "family": "qwen",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "limit": {
+            "context": 262144,
+            "output": 16384
+          },
+          "modalities": {
+            "input": [
+              "text"
+            ],
+            "output": [
+              "text"
+            ]
+          }
+        }
+      }
+    },
+    "deez2_8000": {
+      "npm": "@my-harness/providers",
+      "name": "deez2_8000",
+      "options": {
+        "slots": 2
       },
       "models": {
         "thinking": {
           "id": "thinking",
-          "name": "Thinking (Gemma 4 Q8, default no-think)",
+          "name": "Thinking (Gemma 4 Q8)",
           "family": "gemma",
           "attachment": true,
           "reasoning": true,
@@ -75,11 +104,21 @@
               "text"
             ]
           }
-        },
-        "coding": {
-          "id": "coding",
-          "name": "Coding (Qwen3.6 35B Q8)",
-          "family": "qwen",
+        }
+      }
+    },
+    "deez2_8001": {
+      "npm": "@my-harness/providers",
+      "name": "deez2_8001",
+      "options": {
+        "slots": 2
+      },
+      "models": {
+        "thinking-alt": {
+          "id": "thinking-alt",
+          "name": "Thinking Alt (Gemma 4 Q8)",
+          "family": "gemma",
+          "attachment": true,
           "reasoning": true,
           "tool_call": true,
           "temperature": true,
@@ -89,16 +128,55 @@
           },
           "modalities": {
             "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          }
+        }
+      }
+    },
+    "deezx_8000": {
+      "npm": "@my-harness/providers",
+      "name": "deezx_8000",
+      "options": {
+        "slots": 1
+      },
+      "models": {
+        "research": {
+          "id": "research",
+          "name": "Research (Qwen3.6 27B Q4, lane 1)",
+          "family": "qwen",
+          "reasoning": false,
+          "temperature": true,
+          "tool_call": true,
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          },
+          "modalities": {
+            "input": [
               "text"
             ],
             "output": [
               "text"
             ]
           }
-        },
-        "research": {
-          "id": "research",
-          "name": "Research (Dual Qwen3.6 27B Q4)",
+        }
+      }
+    },
+    "deezx_8001": {
+      "npm": "@my-harness/providers",
+      "name": "deezx_8001",
+      "options": {
+        "slots": 1
+      },
+      "models": {
+        "research-alt": {
+          "id": "research-alt",
+          "name": "Research (Qwen3.6 27B Q4, lane 2)",
           "family": "qwen",
           "reasoning": false,
           "temperature": true,

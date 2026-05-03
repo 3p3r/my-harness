@@ -12,3 +12,10 @@ export type {
 } from "./types";
 export { LlamaCppError, LlamaCppParsingError } from "./types";
 export { EmptyResponseError } from "./empty-response-error";
+export {
+  deez1_8010,
+  deez2_8000,
+  deez2_8001,
+  deezx_8000,
+  deezx_8001,
+} from "./opencode-providers";

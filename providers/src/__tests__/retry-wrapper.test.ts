@@ -270,4 +270,40 @@ describe("withRetry", () => {
     expect(doStream).toHaveBeenCalledTimes(1);
     expect(result).toBeDefined();
   });
+
+  it("doGenerate does not retry when reasoning content is present", async () => {
+    const resultWithReasoning = {
+      content: [
+        { type: "reasoning" as const, text: "Let me think about this" },
+      ],
+      finishReason: { unified: "stop", raw: "stop" },
+      usage: { promptTokens: 10, completionTokens: 5 },
+      rawCall: { rawPrompt: null, rawSettings: {} },
+    };
+    const doGenerate = vi.fn().mockResolvedValue(resultWithReasoning);
+    const base = makeBaseModel({ doGenerate });
+    const wrapped = withRetry(base, { maxAttempts: 5, startingDelay: 1 });
+
+    const result = await wrapped.doGenerate(testCallOptions);
+    expect(doGenerate).toHaveBeenCalledTimes(1);
+    expect(result).toBeDefined();
+  });
+
+  it("doStream does not retry when reasoning chunk is present", async () => {
+    const reasoningStream = makeStreamResultFinite([
+      { type: "reasoning", textDelta: "Let me think..." },
+      {
+        type: "finish",
+        finishReason: "stop",
+        usage: { promptTokens: 0, completionTokens: 0 },
+      },
+    ]);
+    const doStream = vi.fn().mockResolvedValue(reasoningStream);
+    const base = makeBaseModel({ doStream });
+    const wrapped = withRetry(base, { maxAttempts: 5, startingDelay: 1 });
+
+    const result = await wrapped.doStream(testCallOptions);
+    expect(doStream).toHaveBeenCalledTimes(1);
+    expect(result).toBeDefined();
+  });
 });
