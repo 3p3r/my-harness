@@ -17,4 +17,5 @@ All inference routes through `http://deezr:4000/v1`. The router maps three model
 5. **Git is denied** for all sub-agents. Only the orchestrator runs git.
 6. **Never poll for results**, the sub agents will notify you when they're done. Polling causes unnecessary load and can lead to cascading failures.
 7. **Cache-prompt is fast.** Repeated long prefixes get 5-10x speedup. Reuse conversation prefixes when possible.
-
+8. **Prefer CamoFox over Exa** web searches should use the locally installed CamoFox server. Address: `http://deezr:9377` and API key is `this-fleet-is-local`. CamoFox is faster and more reliable than Exa for web searches. You will need to use its skill
+9. **CLI for CamoFox** is `camofox-browser`, do not confuse it with `camofox`.

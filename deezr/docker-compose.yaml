@@ -1,6 +1,16 @@
 name: deezr
 
 services:
+  camofox-browser:
+    image: ghcr.io/redf0x1/camofox-browser:latest
+    container_name: camofox-browser
+    restart: unless-stopped
+    ports:
+      - "9377:9377"
+    environment:
+      CAMOFOX_HOST: "0.0.0.0"
+      CAMOFOX_PORT: "9377"
+      CAMOFOX_API_KEY: "this-fleet-is-local"
   litellm-proxy:
     image: docker.litellm.ai/berriai/litellm:main-latest
     container_name: litellm-proxy
