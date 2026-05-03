@@ -1,7 +1,9 @@
 export const PROVIDER_VERSION = "0.1.0";
 
-export { createQwen36Provider } from "./qwen36-provider";
-export { createGemma4Provider } from "./gemma4-provider";
+// Internal provider constructors - not prefixed with "create" to avoid
+// conflicting with the OpenCode-compatible createProvider below
+export { createQwen36Provider as _createQwen36Provider } from "./qwen36-provider";
+export { createGemma4Provider as _createGemma4Provider } from "./gemma4-provider";
 export type { Qwen36ProviderConfig } from "./qwen36-provider";
 export type { Gemma4ProviderConfig } from "./gemma4-provider";
 export type {
@@ -18,4 +20,5 @@ export {
   deez2_8001,
   deezx_8000,
   deezx_8001,
+  createProvider, // MUST be the only "create"-prefixed export for OpenCode
 } from "./opencode-providers";

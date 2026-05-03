@@ -1,7 +1,11 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import type { LanguageModelV1 } from "ai";
 import type { Qwen36ModelId, RetryConfig, QueueConfig } from "./types";
-import { DEFAULT_RETRY_CONFIG, DEFAULT_QUEUE_CONFIG } from "./constants";
+import {
+  DEFAULT_RETRY_CONFIG,
+  DEFAULT_QUEUE_CONFIG,
+  reorderSystemFirst,
+} from "./constants";
 import { withRetry } from "./retry-wrapper";
 import { withConcurrencyLimit } from "./queue-wrapper";
 
@@ -59,6 +63,9 @@ export function createQwen36Provider(
     baseURL: config.baseURL,
     transformRequestBody: (args) => ({
       ...args,
+      messages: reorderSystemFirst(
+        args.messages as Array<{ role?: string; [key: string]: unknown }>,
+      ),
       chat_template_kwargs: {
         enable_thinking: config.enableThinking ?? true,
       },

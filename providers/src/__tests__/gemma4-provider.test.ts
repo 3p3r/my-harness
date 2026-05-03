@@ -4,6 +4,7 @@ import {
   createGemma4Provider,
   type Gemma4ProviderConfig,
 } from "../gemma4-provider";
+import { reorderSystemFirst } from "../constants";
 
 type TestModel = LanguageModelV1 & {
   provider: string;
@@ -140,5 +141,100 @@ describe("createGemma4Provider", () => {
         ),
       }),
     );
+  });
+
+  describe("reorderSystemFirst (pure function)", () => {
+    it("returns undefined for undefined input", () => {
+      expect(reorderSystemFirst(undefined)).toBeUndefined();
+    });
+
+    it("returns single message as-is", () => {
+      const msgs = [{ role: "user", content: "hello" }];
+      expect(reorderSystemFirst(msgs)).toBe(msgs);
+    });
+
+    it("returns already-ordered messages unchanged (identity)", () => {
+      const msgs = [
+        { role: "system", content: "You are helpful." },
+        { role: "user", content: "Hi" },
+      ];
+      expect(reorderSystemFirst(msgs)).toBe(msgs);
+    });
+
+    it("moves system message to position 0 when it is not first", () => {
+      const msgs = [
+        { role: "user", content: "Hi" },
+        { role: "system", content: "You are helpful." },
+      ];
+      const result = reorderSystemFirst(msgs) as Array<{
+        role?: string;
+        [key: string]: unknown;
+      }>;
+      expect(result[0].role).toBe("system");
+      expect(result[1].role).toBe("user");
+    });
+
+    it("moves developer message to position 0", () => {
+      const msgs = [
+        { role: "user", content: "Hi" },
+        { role: "developer", content: "System instruction" },
+      ];
+      const result = reorderSystemFirst(msgs) as Array<{
+        role?: string;
+        [key: string]: unknown;
+      }>;
+      expect(result[0].role).toBe("developer");
+      expect(result[1].role).toBe("user");
+    });
+
+    it("preserves relative order among system messages", () => {
+      const msgs = [
+        { role: "assistant", content: "Hi!" },
+        { role: "system", content: "First" },
+        { role: "system", content: "Second" },
+        { role: "user", content: "Hello" },
+      ];
+      const result = reorderSystemFirst(msgs) as Array<{
+        role?: string;
+        [key: string]: unknown;
+      }>;
+      expect(result[0]).toEqual({ role: "system", content: "First" });
+      expect(result[1]).toEqual({ role: "system", content: "Second" });
+    });
+
+    it("preserves relative order among non-system messages", () => {
+      const msgs = [
+        { role: "system", content: "S1" },
+        { role: "assistant", content: "A1" },
+        { role: "user", content: "U1" },
+        { role: "assistant", content: "A2" },
+        { role: "system", content: "S2" },
+      ];
+      const result = reorderSystemFirst(msgs) as Array<{
+        role?: string;
+        [key: string]: unknown;
+      }>;
+      expect(result[0]).toEqual({ role: "system", content: "S1" });
+      expect(result[1]).toEqual({ role: "system", content: "S2" });
+      expect(result[2]).toEqual({ role: "assistant", content: "A1" });
+      expect(result[3]).toEqual({ role: "user", content: "U1" });
+      expect(result[4]).toEqual({ role: "assistant", content: "A2" });
+    });
+
+    it("returns unchanged when all messages are system", () => {
+      const msgs = [
+        { role: "system", content: "A" },
+        { role: "system", content: "B" },
+      ];
+      expect(reorderSystemFirst(msgs)).toBe(msgs);
+    });
+
+    it("returns unchanged when no system messages exist", () => {
+      const msgs = [
+        { role: "user", content: "Hi" },
+        { role: "assistant", content: "Hello" },
+      ];
+      expect(reorderSystemFirst(msgs)).toBe(msgs);
+    });
   });
 });

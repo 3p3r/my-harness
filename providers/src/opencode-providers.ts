@@ -90,3 +90,36 @@ export function deezx_8001(options?: ProviderOptions) {
     ),
   );
 }
+
+type OpenCodeProviderOptions = ProviderOptions & { name?: string };
+
+type ProviderSDK = {
+  languageModel:
+    | ((modelId: string) => LanguageModelV1)
+    | (() => LanguageModelV1);
+};
+
+const providerFactories: Record<
+  string,
+  (opts?: ProviderOptions) => ProviderSDK
+> = {
+  deez1_8010,
+  deez2_8000,
+  deez2_8001,
+  deezx_8000,
+  deezx_8001,
+};
+
+export function createProvider(opts: OpenCodeProviderOptions = {}) {
+  const { name, ...options } = opts;
+  if (!name) {
+    throw new Error("Provider name is required");
+  }
+  const factory = providerFactories[name];
+  if (!factory) {
+    throw new Error(
+      `Unknown provider "${name}". Available: ${Object.keys(providerFactories).join(", ")}`,
+    );
+  }
+  return factory(options);
+}

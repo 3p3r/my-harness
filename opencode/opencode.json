@@ -26,7 +26,7 @@
   ],
   "provider": {
     "deez1_8010": {
-      "npm": "@my-harness/providers",
+      "npm": "/home/sep/repos/my-harness/providers",
       "name": "deez1_8010",
       "options": {
         "slots": 4
@@ -55,7 +55,7 @@
       }
     },
     "deez2_8000": {
-      "npm": "@my-harness/providers",
+      "npm": "/home/sep/repos/my-harness/providers",
       "name": "deez2_8000",
       "options": {
         "slots": 2
@@ -108,7 +108,7 @@
       }
     },
     "deez2_8001": {
-      "npm": "@my-harness/providers",
+      "npm": "/home/sep/repos/my-harness/providers",
       "name": "deez2_8001",
       "options": {
         "slots": 2
@@ -139,7 +139,7 @@
       }
     },
     "deezx_8000": {
-      "npm": "@my-harness/providers",
+      "npm": "/home/sep/repos/my-harness/providers",
       "name": "deezx_8000",
       "options": {
         "slots": 1
@@ -168,7 +168,7 @@
       }
     },
     "deezx_8001": {
-      "npm": "@my-harness/providers",
+      "npm": "/home/sep/repos/my-harness/providers",
       "name": "deezx_8001",
       "options": {
         "slots": 1

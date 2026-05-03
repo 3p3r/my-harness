@@ -12,10 +12,7 @@
         "bash": {
           "git": "deny"
         }
-      },
-      "fallback_models": [
-        "deez2_8000/thinking-deep"
-      ]
+      }
     },
     "hephaestus": {
       "model": "opencode-go/deepseek-v4-pro",
@@ -25,10 +22,7 @@
         "bash": {
           "git": "deny"
         }
-      },
-      "fallback_models": [
-        "deez1_8010/coding"
-      ]
+      }
     },
     "oracle": {
       "model": "opencode-go/deepseek-v4-pro",
@@ -37,10 +31,7 @@
         "bash": {
           "git": "deny"
         }
-      },
-      "fallback_models": [
-        "deez2_8000/thinking-deep"
-      ]
+      }
     },
     "librarian": {
       "model": "deezx_8000/research",
@@ -48,13 +39,7 @@
         "bash": {
           "git": "deny"
         }
-      },
-      "fallback_models": [
-        {
-          "model": "opencode-go/minimax-m2.7",
-          "reasoningEffort": "high"
-        }
-      ]
+      }
     },
     "explore": {
       "model": "deez1_8010/coding",
@@ -62,13 +47,7 @@
         "bash": {
           "git": "deny"
         }
-      },
-      "fallback_models": [
-        {
-          "model": "opencode-go/minimax-m2.7",
-          "reasoningEffort": "low"
-        }
-      ]
+      }
     },
     "multimodal-looker": {
       "model": "deez2_8000/thinking",
@@ -76,13 +55,7 @@
         "bash": {
           "git": "deny"
         }
-      },
-      "fallback_models": [
-        {
-          "model": "opencode-go/mimo-v2-omni",
-          "reasoningEffort": "medium"
-        }
-      ]
+      }
     },
     "prometheus": {
       "model": "opencode-go/glm-5.1",
@@ -91,10 +64,7 @@
         "bash": {
           "git": "deny"
         }
-      },
-      "fallback_models": [
-        "deez1_8010/coding"
-      ]
+      }
     },
     "metis": {
       "model": "opencode-go/deepseek-v4-pro",
@@ -103,10 +73,7 @@
         "bash": {
           "git": "deny"
         }
-      },
-      "fallback_models": [
-        "deez1_8010/coding"
-      ]
+      }
     },
     "momus": {
       "model": "opencode-go/deepseek-v4-pro",
@@ -115,10 +82,7 @@
         "bash": {
           "git": "deny"
         }
-      },
-      "fallback_models": [
-        "deez2_8000/thinking"
-      ]
+      }
     },
     "atlas": {
       "model": "opencode-go/deepseek-v4-pro",
@@ -127,10 +91,7 @@
         "bash": {
           "git": "deny"
         }
-      },
-      "fallback_models": [
-        "deez2_8000/thinking"
-      ]
+      }
     },
     "sisyphus-junior": {
       "model": "deez1_8010/coding",
@@ -138,13 +99,7 @@
         "bash": {
           "git": "deny"
         }
-      },
-      "fallback_models": [
-        {
-          "model": "opencode-go/qwen3.6-plus",
-          "reasoningEffort": "low"
-        }
-      ]
+      }
     },
     "OpenCode-Builder": {
       "model": "opencode-go/deepseek-v4-pro",
@@ -153,10 +108,7 @@
         "bash": {
           "git": "deny"
         }
-      },
-      "fallback_models": [
-        "deez1_8010/coding"
-      ]
+      }
     }
   },
   "categories": {

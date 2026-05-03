@@ -239,6 +239,57 @@ describe("Providers Integration", () => {
     });
   });
 
+  describe("Message Reordering", () => {
+    it("Qwen provider: reorderSystemFirst is wired into transformRequestBody", async () => {
+      const model = createQwen36Provider({
+        modelId: "Qwen/Qwen3.6-35B-A3B",
+        baseURL: "http://localhost:8010",
+      });
+
+      const fetchSpy = vi
+        .fn()
+        .mockResolvedValue(mockFetchResponse("Qwen/Qwen3.6-35B-A3B", "ok"));
+      vi.stubGlobal("fetch", fetchSpy);
+
+      await (model as unknown as TestModel).doGenerate({
+        inputFormat: "messages",
+        mode: { type: "regular" },
+        prompt: [
+          { role: "system", content: [{ type: "text", text: "Be helpful." }] },
+          { role: "user", content: [{ type: "text", text: "Hi" }] },
+        ],
+      });
+
+      const body = JSON.parse(fetchSpy.mock.calls[0][1].body);
+      expect(body.messages[0].role).toBe("system");
+    });
+
+    it("Gemma provider: reorderSystemFirst is wired into transformRequestBody", async () => {
+      const model = createGemma4Provider({
+        baseURL: "http://localhost:8000",
+      });
+
+      const fetchSpy = vi
+        .fn()
+        .mockResolvedValue(
+          mockFetchResponse("TrevorJS/gemma-4-26B-A4B-it-uncensored", "ok"),
+        );
+      vi.stubGlobal("fetch", fetchSpy);
+
+      await (model as unknown as TestModel).doGenerate({
+        inputFormat: "messages",
+        mode: { type: "regular" },
+        prompt: [
+          { role: "system", content: [{ type: "text", text: "Be helpful." }] },
+          { role: "user", content: [{ type: "text", text: "Hi" }] },
+        ],
+      });
+
+      const body = JSON.parse(fetchSpy.mock.calls[0][1].body);
+      expect(body.messages[0].role).toBe("system");
+    });
+  });
+
   describe("Retry + Queue Composition", () => {
     const normalResponse = (content: string = "Hello") =>
       mockFetchResponse("test-model", content);

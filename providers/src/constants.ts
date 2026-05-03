@@ -45,6 +45,55 @@ export const DEFAULT_QUEUE_CONFIG: Readonly<Required<QueueConfig>> = {
 } as const;
 
 /**
+ * Reorder messages so any system/developer messages are first.
+ *
+ * The Qwen3.6 Jinja chat template requires system messages at position 0.
+ * If a system message appears elsewhere, llama.cpp raises:
+ *   "System message must be at the beginning."
+ *
+ * This function preserves relative order among system messages and among
+ * non-system messages. If messages are already correctly ordered, it returns
+ * the array unchanged (identity for the common case).
+ */
+export function reorderSystemFirst(
+  messages: Array<{ role?: string; [key: string]: unknown }> | undefined,
+): Array<{ role?: string; [key: string]: unknown }> | undefined {
+  if (!messages || messages.length < 2) return messages;
+
+  let seenNonSystem = false;
+  let needsReorder = false;
+
+  for (let i = 0; i < messages.length; i++) {
+    const msg = messages[i];
+    if (!msg) continue;
+    const role = msg.role;
+    if (role === "system" || role === "developer") {
+      if (seenNonSystem) {
+        needsReorder = true;
+        break;
+      }
+    } else {
+      seenNonSystem = true;
+    }
+  }
+
+  if (!needsReorder) return messages;
+
+  const systemMsgs: Array<{ role?: string; [key: string]: unknown }> = [];
+  const otherMsgs: Array<{ role?: string; [key: string]: unknown }> = [];
+
+  for (const m of messages) {
+    if (m.role === "system" || m.role === "developer") {
+      systemMsgs.push(m);
+    } else {
+      otherMsgs.push(m);
+    }
+  }
+
+  return [...systemMsgs, ...otherMsgs];
+}
+
+/**
  * Maps Vercel AI SDK v4 reasoning levels to llama.cpp `enable_thinking`.
  *
  * Only `'none'` maps to `false`; all other levels enable thinking.
