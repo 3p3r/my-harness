@@ -15,15 +15,15 @@ This repo holds the compose files, router config, templates, and smoke tests for
 
 ## Router Aliases
 
-| Alias | Backing node | Use it for |
-| --- | --- | --- |
-| `thinking` | `deez2` | Multimodal and long-context work with no-think default |
-| `thinking-deep` | `deez2` | Explicit reasoning-enabled Gemma lane |
-| `opus` | `deez2` | Compatibility alias for `thinking-deep` |
-| `coding` | `deez1` | Coding, tool use, and long-context code tasks |
-| `coder` | `deez1` | Compatibility alias for `coding` |
-| `research` | `deezx` | Native-long-context research and tool use |
-| `haiku` | `deezx` | Compatibility alias for `research` |
+The router maps OpenCode model names to backend model groups via `deezr/config.yaml`:
+
+| Alias | LiteLLM group | Backing node | Backend model |
+| --- | --- | --- | --- |
+| `my-sonnet` | `full-qwen` | `deez1` | `Qwen/Qwen3.6-35B-A3B` (4 shared slots, 262k context) |
+| `my-haiku` | `smaller-qwens` | `deezx` | `Qwen/Qwen3.6-27B` (2 lanes, 131k context each) |
+| `my-opus` | `geminis` | `deez2` | `TrevorJS/gemma-4-26B-A4B-it-uncensored` (4 slots, 262k context, multimodal) |
+
+These are the only model names the router recognizes in the current config. Legacy aliases (`coding`, `coder`, `thinking`, `thinking-deep`, `opus`, `research`, `haiku`) have been removed.
 
 ## Repo Layout
 
