@@ -1,12 +1,12 @@
 # Local Inference Fleet
 
-This repo holds the compose files, router config, templates, and smoke tests for the local four-host inference fleet.
+This repo holds the compose files, router config, and templates for the local four-host inference fleet.
 
 ## Fleet Overview
 
 | Host | Role | Direct API | Model | Capacity | Best use |
 | --- | --- | --- | --- | --- | --- |
-| `deez1` | Coding | `http://192.168.1.95:8010/v1` | `Qwen/Qwen3.6-35B-A3B` | 4 shared slots, `262144` context pool | Coding, tool use, long-context code work |
+| `deez1` | Coding | `http://192.168.1.95:8000/v1`, `http://192.168.1.95:8001/v1` | `TrevorJS/gemma-4-26B-A4B-it-uncensored` | 4 total slots across two endpoints, `262144` context per endpoint | Coding, tool use, long-context code work |
 | `deez2` | Thinking | `http://192.168.1.114:8000/v1`, `http://192.168.1.114:8001/v1` | `TrevorJS/gemma-4-26B-A4B-it-uncensored` | 4 total slots across two endpoints, `262144` context per endpoint | Multimodal prompts and long-context reasoning |
 | `deezx` | Research | `http://192.168.1.161:8000/v1`, `http://192.168.1.161:8001/v1` | `Qwen/Qwen3.6-27B` | 2 lanes, `131072` context per lane | Native-long-context research and tool use |
 | `deezr` | Router | `http://192.168.1.85:4000/v1` | LiteLLM aliases | Routes to the backend nodes | Main user-facing entry point on the LAN |
@@ -19,9 +19,8 @@ The router maps OpenCode model names to backend model groups via `deezr/config.y
 
 | Alias | LiteLLM group | Backing node | Backend model |
 | --- | --- | --- | --- |
-| `my-sonnet` | `full-qwen` | `deez1` | `Qwen/Qwen3.6-35B-A3B` (4 shared slots, 262k context) |
+| `my-opus` | `geminis` | `deez1` + `deez2` | `TrevorJS/gemma-4-26B-A4B-it-uncensored` (8 slots across both nodes, 262k context, multimodal) |
 | `my-haiku` | `smaller-qwens` | `deezx` | `Qwen/Qwen3.6-27B` (2 lanes, 131k context each) |
-| `my-opus` | `geminis` | `deez2` | `TrevorJS/gemma-4-26B-A4B-it-uncensored` (4 slots, 262k context, multimodal) |
 
 These are the only model names the router recognizes in the current config. Legacy aliases (`coding`, `coder`, `thinking`, `thinking-deep`, `opus`, `research`, `haiku`) have been removed.
 
@@ -29,7 +28,7 @@ These are the only model names the router recognizes in the current config. Lega
 
 | Host | Remote deploy dir | Source in this repo | Required host state |
 | --- | --- | --- | --- |
-| `deez1` | `/opt/deez1` | [deez1/docker-compose.yaml](deez1/docker-compose.yaml), [deez1/tool_chat_template_qwen3coder.jinja](deez1/tool_chat_template_qwen3coder.jinja) | `/root/models/qwen-gguf-strix/Qwen3.6-35B-A3B-Q8_0.gguf` |
+| `deez1` | `/opt/deez1` | [deez1/docker-compose.yaml](deez1/docker-compose.yaml) | Writable Hugging Face cache at `/root/.cache/huggingface` |
 | `deez2` | `/opt/deez2` | [deez2/docker-compose.yaml](deez2/docker-compose.yaml) | Writable Hugging Face cache at `/root/.cache/huggingface` |
 | `deezx` | `/opt/deezx` | [deezx/docker-compose.yaml](deezx/docker-compose.yaml), [deezx/tool_chat_template_qwen3coder.jinja](deezx/tool_chat_template_qwen3coder.jinja) | `/root/models/qwen3.6-27b-gguf/Qwen_Qwen3.6-27B-Q4_K_M.gguf` |
 | `deezr` | `/opt/deezr` | [deezr/docker-compose.yaml](deezr/docker-compose.yaml), [deezr/config.yaml](deezr/config.yaml) | `config.yaml` stored beside the compose file |
@@ -67,7 +66,7 @@ These are direct node measurements. `deezr` is not listed because it routes requ
 
 A follow-up long-prefix probe with `cache_prompt=true` and a shared `20k`-token prefix showed the new cache-reuse path collapsing prompt time on the second request from about `35.8s -> 4.0s` on `deez1`, `22.6s -> 0.34s` on `deez2`, and `16.7s -> 1.0s` on `deezx` while keeping decode speed flat.
 
-The current snapshot shows `deez1` still delivering the highest total coding throughput, `deez2` holding steady on multimodal reasoning, and `deezx` trading raw speed for a native `131072`-token research window on each 3090 lane.
+The current snapshot reflects the pre-migration setup where `deez1` ran Qwen 35B. `deez1` has since been migrated to Gemma 4 (matching `deez2`). Updated benchmarks are pending.
 
 ## Deploy Or Refresh
 
@@ -76,4 +75,4 @@ The current snapshot shows `deez1` still delivering the highest total coding thr
 3. Start the backend nodes first: `deez1`, `deez2`, then `deezx`.
 4. Start `deezr` last.
 5. After changing [deezr/config.yaml](deezr/config.yaml), reload the router with `docker compose up -d --force-recreate litellm-proxy`.
-6. Re-run the smoke tests and the benchmark.
+6. Re-run the benchmark.

@@ -1,14 +1,5 @@
 model_list:
-  # 1. Full Qwen (4 slots)
-  - model_name: full-qwen
-    litellm_params:
-      model: openai/Qwen/Qwen3.6-35B-A3B
-      api_base: http://192.168.1.95:8010/v1
-      api_key: "none"
-      max_parallel_requests: 4
-      reasoning_format: deepseek
-
-  # 2. Routed smaller Qwens (1 slot per port)
+  # 1. Routed smaller Qwens / Research (1 slot per port)
   - model_name: smaller-qwens
     litellm_params:
       model: openai/Qwen/Qwen3.6-27B
@@ -25,7 +16,24 @@ model_list:
       max_parallel_requests: 1
       reasoning_format: deepseek
 
-  # 3. Routed Geminis / Gemma (2 slots per port)
+  # 2. Routed Geminis / Gemma (2 slots per port) — deez1
+  - model_name: geminis
+    litellm_params:
+      model: openai/TrevorJS/gemma-4-26B-A4B-it-uncensored
+      api_base: http://192.168.1.95:8000/v1
+      api_key: "none"
+      max_parallel_requests: 2
+      reasoning_format: auto
+
+  - model_name: geminis
+    litellm_params:
+      model: openai/TrevorJS/gemma-4-26B-A4B-it-uncensored
+      api_base: http://192.168.1.95:8001/v1
+      api_key: "none"
+      max_parallel_requests: 2
+      reasoning_format: auto
+
+  # 3. Routed Geminis / Gemma (2 slots per port) — deez2
   - model_name: geminis
     litellm_params:
       model: openai/TrevorJS/gemma-4-26B-A4B-it-uncensored
@@ -44,7 +52,6 @@ model_list:
 
 router_settings:
   model_group_alias:
-    my-sonnet: full-qwen
     my-haiku: smaller-qwens
     my-opus: geminis
 

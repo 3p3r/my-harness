@@ -33,23 +33,6 @@
         "baseURL": "http://deezr:4000/v1"
       },
       "models": {
-        "my-sonnet": {
-          "id": "my-sonnet",
-          "name": "My Sonnet (Full Qwen3.6 35B)",
-          "family": "qwen",
-          "attachment": false,
-          "reasoning": true,
-          "tool_call": true,
-          "temperature": true,
-          "limit": {
-            "context": 262144,
-            "output": 16384
-          },
-          "modalities": {
-            "input": ["text"],
-            "output": ["text"]
-          }
-        },
         "my-haiku": {
           "id": "my-haiku",
           "name": "My Haiku (Routed smaller Qwen3.6 27B)",
