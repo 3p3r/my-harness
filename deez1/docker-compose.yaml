@@ -13,7 +13,9 @@ services:
     devices:
       - /dev/dri:/dev/dri
     volumes:
-      - /root/.cache/huggingface:/root/.cache/huggingface
+      - /root/.cache/huggingface-gemma4-a:/root/.cache/huggingface
+      - /root/.cache/llama.cpp-gemma4-a:/root/.cache/llama.cpp
+      - ./gemma-4-26B-A4B-it-chat_template.jinja:/opt/templates/gemma-4-26B-A4B-it-chat_template.jinja:ro
     environment:
       HF_HOME: /root/.cache/huggingface
     ulimits:
@@ -39,6 +41,7 @@ services:
       - gemma-4-26B-A4B-it-uncensored-Q8_0.gguf
       - -a
       - TrevorJS/gemma-4-26B-A4B-it-uncensored
+      - --offline
       - -c
       - "262144"
       - -ngl
@@ -70,6 +73,8 @@ services:
       - auto
       - --sleep-idle-seconds
       - "3600"
+      - --chat-template-file
+      - /opt/templates/gemma-4-26B-A4B-it-chat_template.jinja
       - --jinja
       - --host
       - 0.0.0.0
@@ -88,7 +93,9 @@ services:
     devices:
       - /dev/dri:/dev/dri
     volumes:
-      - /root/.cache/huggingface:/root/.cache/huggingface
+      - /root/.cache/huggingface-gemma4-b:/root/.cache/huggingface
+      - /root/.cache/llama.cpp-gemma4-b:/root/.cache/llama.cpp
+      - ./gemma-4-26B-A4B-it-chat_template.jinja:/opt/templates/gemma-4-26B-A4B-it-chat_template.jinja:ro
     environment:
       HF_HOME: /root/.cache/huggingface
     ulimits:
@@ -114,6 +121,7 @@ services:
       - gemma-4-26B-A4B-it-uncensored-Q8_0.gguf
       - -a
       - TrevorJS/gemma-4-26B-A4B-it-uncensored
+      - --offline
       - -c
       - "262144"
       - -ngl
@@ -145,6 +153,8 @@ services:
       - auto
       - --sleep-idle-seconds
       - "3600"
+      - --chat-template-file
+      - /opt/templates/gemma-4-26B-A4B-it-chat_template.jinja
       - --jinja
       - --host
       - 0.0.0.0

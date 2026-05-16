@@ -1,3 +1,5 @@
+import hashlib
+import json
 import logging
 
 from litellm.integrations.custom_logger import CustomLogger
@@ -5,6 +7,54 @@ from litellm.proxy.proxy_server import UserAPIKeyAuth, DualCache
 from typing import Any, Literal
 
 logger = logging.getLogger(__name__)
+
+
+def _first_text_snippet(msg: dict, max_len: int) -> str:
+    content = msg.get("content")
+    if isinstance(content, str):
+        return content[:max_len]
+    if content is not None:
+        try:
+            return json.dumps(content, ensure_ascii=False)[:max_len]
+        except (TypeError, ValueError):
+            return str(content)[:max_len]
+    return ""
+
+
+def _session_id_for_affinity(data: dict, messages: list) -> str | None:
+    """Stable per-conversation id for LiteLLM session_affinity (router pins one Gemma host)."""
+    u = data.get("user")
+    if isinstance(u, str) and u.strip():
+        return u.strip()[:256]
+    sys_snip = ""
+    usr_snip = ""
+    for m in messages:
+        if not isinstance(m, dict):
+            continue
+        role = m.get("role")
+        if role == "system" and not sys_snip:
+            sys_snip = _first_text_snippet(m, 4096)
+        elif role == "user" and not usr_snip:
+            usr_snip = _first_text_snippet(m, 8192)
+        if sys_snip and usr_snip:
+            break
+    if not sys_snip and not usr_snip:
+        return None
+    h = hashlib.sha256()
+    h.update(sys_snip.encode("utf-8", errors="replace"))
+    h.update(b"\0")
+    h.update(usr_snip.encode("utf-8", errors="replace"))
+    return h.hexdigest()
+
+
+def _inject_litellm_session_id(data: dict, session_id: str) -> None:
+    for key in ("metadata", "litellm_metadata"):
+        md = data.get(key)
+        if not isinstance(md, dict):
+            md = {}
+            data[key] = md
+        md["session_id"] = session_id
+
 
 class ProxyHandler(CustomLogger):
     async def async_pre_call_hook(
@@ -65,6 +115,10 @@ class ProxyHandler(CustomLogger):
             first = messages[0]
             role = first.get("role") if isinstance(first, dict) else type(first).__name__
             logger.info("pre_call_hook: first message role=%s", role)
+
+        sid = _session_id_for_affinity(data, messages)
+        if sid:
+            _inject_litellm_session_id(data, sid)
 
         return data
 

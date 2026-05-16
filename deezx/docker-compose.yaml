@@ -6,13 +6,17 @@ services:
     container_name: qwen36-research-a-llama
     restart: unless-stopped
     init: true
+    ipc: host
     gpus: all
     network_mode: host
     volumes:
       - /root/models/qwen3.6-27b-gguf:/models:ro
+      - /root/.cache/huggingface-qwen36-a:/root/.cache/huggingface
+      - /root/.cache/llama.cpp-qwen36-a:/root/.cache/llama.cpp
       - ./tool_chat_template_qwen3coder.jinja:/opt/plugins/tool_chat_template_qwen3coder.jinja:ro
     environment:
       CUDA_VISIBLE_DEVICES: "0"
+      HF_HOME: /root/.cache/huggingface
     ulimits:
       nofile:
         soft: 1048576
@@ -35,6 +39,7 @@ services:
       - --no-mmproj
       - -a
       - Qwen/Qwen3.6-27B
+      - --offline
       - -c
       - "131072"
       - -dev
@@ -80,13 +85,17 @@ services:
     container_name: qwen36-research-b-llama
     restart: unless-stopped
     init: true
+    ipc: host
     gpus: all
     network_mode: host
     volumes:
       - /root/models/qwen3.6-27b-gguf:/models:ro
+      - /root/.cache/huggingface-qwen36-b:/root/.cache/huggingface
+      - /root/.cache/llama.cpp-qwen36-b:/root/.cache/llama.cpp
       - ./tool_chat_template_qwen3coder.jinja:/opt/plugins/tool_chat_template_qwen3coder.jinja:ro
     environment:
       CUDA_VISIBLE_DEVICES: "1"
+      HF_HOME: /root/.cache/huggingface
     ulimits:
       nofile:
         soft: 1048576
@@ -109,6 +118,7 @@ services:
       - --no-mmproj
       - -a
       - Qwen/Qwen3.6-27B
+      - --offline
       - -c
       - "131072"
       - -dev

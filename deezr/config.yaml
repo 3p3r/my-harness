@@ -54,10 +54,18 @@ router_settings:
   model_group_alias:
     my-haiku: smaller-qwens
     my-opus: geminis
+  optional_pre_call_checks:
+    - session_affinity
+  deployment_affinity_ttl_seconds: 86400
+  model_group_affinity_config:
+    geminis:
+      - session_affinity
+    smaller-qwens:
+      - session_affinity
 
 litellm_settings:
   drop_params: true
-  request_timeout: 600
+  request_timeout: 900
   num_retries: 2
   callbacks: rules.proxy_handler_instance
 
