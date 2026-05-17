@@ -88,7 +88,7 @@
       }
     },
     "atlas": {
-      "model": "litellm/my-opus",
+      "model": "opencode-go/deepseek-v4-flash",
       "reasoningEffort": "low",
       "permission": {
         "bash": {

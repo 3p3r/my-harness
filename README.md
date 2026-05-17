@@ -19,8 +19,8 @@ The router maps OpenCode model names to backend model groups via `deezr/config.y
 
 | Alias | LiteLLM group | Backing node | Backend model |
 | --- | --- | --- | --- |
-| `my-opus` | `geminis` | `deez1` + `deez2` | `TrevorJS/gemma-4-26B-A4B-it-uncensored` (8 slots across both nodes, 262k context, multimodal); deezr `session_affinity` pins a session to one deployment |
-| `my-haiku` | `smaller-qwens` | `deezx` | `Qwen/Qwen3.6-27B` (2 lanes, 131k context each; `session_affinity` on deezr) |
+| `my-opus` | `geminis` | `deez1` + `deez2` | `TrevorJS/gemma-4-26B-A4B-it-uncensored` (8 slots across both nodes, 262k context, multimodal); LiteLLM `least-busy` picks the least-loaded slot among deployments; `session_affinity` pins a session to one deployment |
+| `my-haiku` | `smaller-qwens` | `deezx` | `Qwen/Qwen3.6-27B` (2 lanes, 131k context each; `least-busy` + `session_affinity` on deezr) |
 
 These are the only model names the router recognizes in the current config. Legacy aliases (`coding`, `coder`, `thinking`, `thinking-deep`, `opus`, `research`, `haiku`) have been removed.
 

@@ -1,5 +1,5 @@
 model_list:
-  # 1. Routed smaller Qwens / Research (1 slot per port)
+  # 1. Routed smaller Qwens / Research (1 slot per port) — deezx
   - model_name: smaller-qwens
     litellm_params:
       model: openai/Qwen/Qwen3.6-27B
@@ -54,6 +54,7 @@ router_settings:
   model_group_alias:
     my-haiku: smaller-qwens
     my-opus: geminis
+  routing_strategy: least-busy
   optional_pre_call_checks:
     - session_affinity
   deployment_affinity_ttl_seconds: 86400

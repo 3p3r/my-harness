@@ -4,8 +4,8 @@ All inference routes through `http://deezr:4000/v1`. The router maps two model n
 
 | Model | Backend | Slots | Context | Best for |
 |-------|---------|-------|---------|----------|
-| `my-opus` | deez1 + deez2 (Gemma 4 26B) | **8** | 262k | Multimodal, reasoning, coding; deezr pins a session to one `geminis` deployment (`session_affinity`) |
-| `my-haiku` | deezx (Qwen3.6 27B) | **2** | 131k | Research, tool use; same `session_affinity` pinning as `my-opus` |
+| `my-opus` | deez1 + deez2 (Gemma 4 26B) | **8** | 262k | Multimodal, reasoning, coding; LiteLLM `least-busy` + `session_affinity` (pins a session to one deployment) |
+| `my-haiku` | deezx (Qwen3.6 27B) | **2** | 131k | Research, tool use; same `least-busy` + `session_affinity` as `my-opus` |
 
 ## Hard rules
 
